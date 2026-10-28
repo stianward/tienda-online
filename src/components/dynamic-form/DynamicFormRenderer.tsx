@@ -11,6 +11,7 @@ interface DynamicFormRendererProps {
   render3D?: Render3D | null;
   initialValues?: Record<string, any>;
   initialTableRows?: Record<string, string | number>[];
+  onTableRowsChange?: (rows: Record<string, string | number>[]) => void;
   onSubmit: (formData: Record<string, any>, tableRows?: Record<string, string | number>[]) => void;
   onCancel?: () => void;
   submitButtonText?: string;
@@ -24,6 +25,7 @@ export default function DynamicFormRenderer({
   render3D,
   initialValues = {},
   initialTableRows = [],
+  onTableRowsChange,
   onSubmit,
   onCancel,
   submitButtonText,
@@ -33,6 +35,13 @@ export default function DynamicFormRenderer({
   const [formData, setFormData] = useState<Record<string, any>>(initialValues);
   const [tableRows, setTableRows] = useState<Record<string, string | number>[]>(initialTableRows);
   const [errors, setErrors] = useState<Record<string, string>>({});
+
+  const handleTableRowsUpdate = (newRows: Record<string, string | number>[]) => {
+    setTableRows(newRows);
+    if (onTableRowsChange) {
+      onTableRowsChange(newRows);
+    }
+  };
 
   const handleInputChange = (elementId: string, value: any) => {
     setFormData((prev) => ({
@@ -198,7 +207,7 @@ export default function DynamicFormRenderer({
                   tableConfig={customTable}
                   renderConfig={render3D}
                   value={tableRows}
-                  onChange={(rows) => setTableRows(rows)}
+                  onChange={handleTableRowsUpdate}
                 />
               </div>
             );

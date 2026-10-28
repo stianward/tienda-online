@@ -11,8 +11,6 @@ import {
   ShieldCheck,
   Truck,
   Box,
-  Plus,
-  Minus,
   Sparkles,
 } from "lucide-react";
 import DynamicFormRenderer from "@/components/dynamic-form/DynamicFormRenderer";
@@ -28,7 +26,9 @@ function ProductDetailContent() {
   const [customTable, setCustomTable] = useState<CustomTable | null>(null);
   const [render3D, setRender3D] = useState<Render3D | null>(null);
 
-  const [quantity, setQuantity] = useState<number>(1);
+  // REQUERIMIENTO: La cantidad la determina dinámicamente el número de filas en la tabla
+  // Si no hay tabla, representa 1 unidad.
+  const [tableRowsCount, setTableRowsCount] = useState<number>(1);
 
   useEffect(() => {
     const database = getDatabase();
@@ -47,6 +47,11 @@ function ProductDetailContent() {
             const foundTable = database.customTables.find((t) => t.id === foundForm.customTableId);
             if (foundTable) {
               setCustomTable(foundTable);
+              const initialCount =
+                foundTable.initialRows && foundTable.initialRows.length > 0
+                  ? foundTable.initialRows.length
+                  : 1;
+              setTableRowsCount(initialCount);
 
               if (foundTable.renderId) {
                 const foundRender = database.renders.find((r) => r.id === foundTable.renderId);
@@ -67,19 +72,24 @@ function ProductDetailContent() {
     );
   }
 
-  const totalPrice = product.price * quantity;
+  // REGLA: Cada registro de la tabla que sea agregado/eliminado representará 1 unidad del producto.
+  // Ejemplo: Si el producto vale 10.000 y se agregan 5 filas, entonces el valor del pedido será 50.000.
+  const effectiveQuantity = customTable ? Math.max(1, tableRowsCount) : 1;
+  const totalPrice = product.price * effectiveQuantity;
 
   const handleProceedToBilling = (
     formData: Record<string, any>,
     tableRows?: Record<string, string | number>[]
   ) => {
-    // Guardar pedido provisional en sessionStorage para el módulo de facturación
+    const rowsCount = tableRows && tableRows.length > 0 ? tableRows.length : effectiveQuantity;
+    const finalTotal = product.price * rowsCount;
+
     const draftOrder = {
       productId: product.id,
       productName: product.name,
       unitPrice: product.price,
-      quantity,
-      total: totalPrice,
+      quantity: rowsCount,
+      total: finalTotal,
       customFormData: formData,
       tableData: tableRows || [],
     };
@@ -112,7 +122,7 @@ function ProductDetailContent() {
       {/* Main Content */}
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 flex-1 w-full space-y-8">
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
-          {/* Columna Izquierda: Información del Producto & Cantidades */}
+          {/* Columna Izquierda: Información del Producto & Valor Total Dinámico */}
           <div className="lg:col-span-5 space-y-6">
             <div className="bg-white rounded-3xl border border-slate-200 overflow-hidden shadow-sm p-4">
               <div className="relative h-80 rounded-2xl overflow-hidden bg-slate-100">
@@ -126,55 +136,43 @@ function ProductDetailContent() {
                 </div>
               </div>
 
-              <div className="pt-5 space-y-3">
-                <h1 className="text-2xl font-black text-slate-900 tracking-tight">
-                  {product.name}
-                </h1>
-                <p className="text-xs text-slate-600 leading-relaxed">
-                  {product.description}
-                </p>
-
-                {/* Selector de Cantidades */}
-                <div className="pt-4 border-t border-slate-100 flex items-center justify-between">
-                  <span className="text-xs font-bold text-slate-700">
-                    Cantidad a comprar:
-                  </span>
-                  <div className="flex items-center gap-3 bg-slate-100 p-1 rounded-xl border border-slate-200">
-                    <button
-                      type="button"
-                      disabled={quantity <= 1}
-                      onClick={() => setQuantity((q) => Math.max(1, q - 1))}
-                      className="w-7 h-7 flex items-center justify-center bg-white rounded-lg text-slate-700 font-bold shadow-xs hover:bg-slate-50 disabled:opacity-40"
-                    >
-                      <Minus className="w-3.5 h-3.5" />
-                    </button>
-                    <span className="text-sm font-black text-slate-900 w-6 text-center">
-                      {quantity}
-                    </span>
-                    <button
-                      type="button"
-                      disabled={quantity >= product.stock}
-                      onClick={() => setQuantity((q) => Math.min(product.stock, q + 1))}
-                      className="w-7 h-7 flex items-center justify-center bg-white rounded-lg text-slate-700 font-bold shadow-xs hover:bg-slate-50 disabled:opacity-40"
-                    >
-                      <Plus className="w-3.5 h-3.5" />
-                    </button>
-                  </div>
+              <div className="pt-5 space-y-4">
+                <div>
+                  <h1 className="text-2xl font-black text-slate-900 tracking-tight">
+                    {product.name}
+                  </h1>
+                  <p className="text-xs text-slate-600 leading-relaxed mt-2">
+                    {product.description}
+                  </p>
                 </div>
 
-                {/* Subtotal */}
+                {/* Subtotal Dinámico Calculado según las filas de la tabla */}
                 <div className="p-4 rounded-2xl bg-indigo-50/70 border border-indigo-100 flex items-center justify-between">
                   <div>
                     <span className="text-[11px] font-semibold text-indigo-700 block">
-                      Total por {quantity} {quantity === 1 ? "unidad" : "unidades"}:
+                      {customTable ? (
+                        <>
+                          Total por <strong>{effectiveQuantity}</strong>{" "}
+                          {effectiveQuantity === 1 ? "unidad (1 fila en tabla)" : "unidades (filas en tabla)"}:
+                        </>
+                      ) : (
+                        <>Valor del producto (1 unidad):</>
+                      )}
                     </span>
                     <span className="text-2xl font-black text-indigo-950">
                       ${totalPrice.toLocaleString("es-CO")}
                     </span>
                   </div>
-                  <span className="text-[10px] font-bold text-indigo-600 bg-white px-2.5 py-1 rounded-lg border border-indigo-200">
-                    ${product.price.toLocaleString("es-CO")} c/u
-                  </span>
+                  <div className="text-right">
+                    <span className="text-[10px] font-bold text-indigo-600 bg-white px-2.5 py-1 rounded-lg border border-indigo-200 block">
+                      ${product.price.toLocaleString("es-CO")} c/u
+                    </span>
+                    {customTable && (
+                      <span className="text-[10px] text-slate-500 mt-1 block font-medium">
+                        1 fila = 1 unidad
+                      </span>
+                    )}
+                  </div>
                 </div>
               </div>
             </div>
@@ -191,7 +189,7 @@ function ProductDetailContent() {
             </div>
           </div>
 
-          {/* Columna Derecha: Formulario Personalizado Embebido con 3D */}
+          {/* Columna Derecha: Formulario Personalizado Embebido con Tabla y Modal 3D */}
           <div className="lg:col-span-7 space-y-6">
             <div className="bg-white p-6 sm:p-8 rounded-3xl border border-slate-200 shadow-sm space-y-5">
               <div className="border-b border-slate-100 pb-4">
@@ -203,7 +201,7 @@ function ProductDetailContent() {
                   {customForm ? customForm.name : "Personalización de Producto"}
                 </h2>
                 <p className="text-xs text-slate-500 mt-1">
-                  Diligencia las especificaciones para tu producto. Si incluye tabla personalizada, utiliza el visor 3D para previsualizar el resultado.
+                  Diligencia las especificaciones. Cada fila agregada a la tabla suma 1 unidad al valor total del pedido.
                 </p>
               </div>
 
@@ -212,6 +210,7 @@ function ProductDetailContent() {
                   form={customForm}
                   customTable={customTable}
                   render3D={render3D}
+                  onTableRowsChange={(rows) => setTableRowsCount(Math.max(1, rows.length))}
                   submitButtonText="Continuar a Facturación y Pago"
                   cancelButtonText="Volver al Catálogo"
                   onSubmit={handleProceedToBilling}
@@ -241,9 +240,14 @@ function ProductDetailContent() {
 
 export default function ProductDetailPage() {
   return (
-    <Suspense fallback={<div className="min-h-screen flex items-center justify-center p-6 bg-slate-50 text-slate-500 text-sm">Cargando producto...</div>}>
+    <Suspense
+      fallback={
+        <div className="min-h-screen flex items-center justify-center p-6 bg-slate-50 text-slate-500 text-sm">
+          Cargando producto...
+        </div>
+      }
+    >
       <ProductDetailContent />
     </Suspense>
   );
 }
-
