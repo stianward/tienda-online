@@ -4,35 +4,45 @@ import { mpPreference } from "@/lib/mercadopago/client";
 export async function POST(request: Request) {
   try {
     const body = await request.json();
-    const { title, quantity, unit_price, orderId } = body;
+    const { title, quantity, unit_price, orderId, payer } = body;
 
     const host = request.headers.get("host") || "localhost:3000";
-    const protocol = process.env.NODE_ENV === "production" ? "https" : "http";
+    const protocol = host.includes("localhost") ? "http" : "https";
     const baseUrl = `${protocol}://${host}`;
 
-    // Intentar crear la preferencia con el SDK de Mercado Pago
+    // Si es https permite auto_return; si es localhost, Mercado Pago rechaza auto_return
+    const isHttps = baseUrl.startsWith("https://");
+
     try {
       const response = await mpPreference.create({
         body: {
           items: [
             {
-              id: orderId || "order-item",
-              title: title || "Producto Personalizado GrabaMil",
-              quantity: Number(quantity) || 1,
-              unit_price: Number(unit_price) || 50000,
+              id: String(orderId || "item-1"),
+              title: String(title || "Producto Personalizado GrabaMil"),
+              quantity: Math.max(1, Number(quantity) || 1),
+              unit_price: Math.max(1, Number(unit_price) || 10000),
               currency_id: "COP",
             },
           ],
+          payer: payer
+            ? {
+                name: payer.name || "Cliente",
+                email: payer.email || "cliente@ejemplo.com",
+              }
+            : undefined,
           back_urls: {
             success: `${baseUrl}/transaction-result?order_id=${orderId}&status=approved`,
             pending: `${baseUrl}/transaction-result?order_id=${orderId}&status=pending`,
             failure: `${baseUrl}/transaction-result?order_id=${orderId}&status=rejected`,
           },
-          auto_return: "approved",
-          notification_url: `${baseUrl}/api/mercadopago/webhook`,
-          external_reference: orderId,
+          ...(isHttps ? { auto_return: "approved" } : {}),
+          statement_descriptor: "GRABAMIL",
+          external_reference: String(orderId),
         },
       });
+
+      console.log(`[Mercado Pago] Preference created: ${response.id}`);
 
       return NextResponse.json({
         id: response.id,
@@ -40,17 +50,20 @@ export async function POST(request: Request) {
         sandbox_init_point: response.sandbox_init_point,
       });
     } catch (sdkError: any) {
-      console.warn("Mercado Pago SDK API call failed (token not configured or development sandbox):", sdkError?.message);
+      console.error("[Mercado Pago SDK Error]:", sdkError?.message || sdkError);
 
-      // Modo desarrollo / Mock seguro cuando no hay token de producción
-      return NextResponse.json({
-        id: `pref_mock_${Date.now()}`,
-        init_point: `${baseUrl}/transaction-result?order_id=${orderId}&status=approved`,
-        sandbox_init_point: `${baseUrl}/transaction-result?order_id=${orderId}&status=approved`,
-      });
+      return NextResponse.json(
+        {
+          id: `pref_mock_${Date.now()}`,
+          init_point: `${baseUrl}/transaction-result?order_id=${orderId}&status=approved`,
+          sandbox_init_point: `${baseUrl}/transaction-result?order_id=${orderId}&status=approved`,
+          warning: sdkError?.message,
+        },
+        { status: 200 }
+      );
     }
   } catch (error: any) {
+    console.error("[Create Preference Handler Error]:", error);
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 }
-

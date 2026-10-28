@@ -103,12 +103,35 @@ export default function CheckoutBillingPage() {
       // Guardar referencia activa
       if (typeof window !== "undefined") {
         sessionStorage.setItem("grabamil_last_order_id", newOrder.id);
+        localStorage.setItem("grabamil_last_order_id", newOrder.id);
       }
 
-      // Redirigir a la simulación interactiva de Mercado Pago o resultado de transacción
-      setTimeout(() => {
+      // 3. Crear preferencia oficial con la API de Mercado Pago
+      const prefResponse = await fetch("/api/mercadopago/create-preference", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          title: newOrder.productName,
+          quantity: newOrder.quantity,
+          unit_price: newOrder.unitPrice,
+          orderId: newOrder.id,
+          payer: {
+            name: newOrder.customerData.name,
+            email: newOrder.customerData.email,
+          },
+        }),
+      });
+
+      const prefData = await prefResponse.json();
+
+      if (prefData.sandbox_init_point || prefData.init_point) {
+        // Redirección directa al Checkout Pro oficial de Mercado Pago (Sandbox con credenciales de prueba)
+        const checkoutUrl = prefData.sandbox_init_point || prefData.init_point;
+        window.location.href = checkoutUrl;
+      } else {
+        // Fallback local en caso de error de red
         router.push(`/transaction-result?order_id=${newOrder.id}&status=approved`);
-      }, 1000);
+      }
     } catch (error) {
       console.error("Error creating order:", error);
       alert("Hubo un error al procesar la facturación. Por favor intenta de nuevo.");

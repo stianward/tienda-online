@@ -21,25 +21,37 @@ function TransactionResultContent() {
   const searchParams = useSearchParams();
   const router = useRouter();
 
-  const orderId = searchParams.get("order_id");
-  const initialStatusParam = searchParams.get("status") || "approved";
+  // Obtener identificador de orden desde parámetros de Mercado Pago o sesión local
+  const urlOrderId = searchParams.get("order_id") || searchParams.get("external_reference");
+  const [effectiveOrderId, setEffectiveOrderId] = useState<string | null>(urlOrderId);
+
+  // Parámetros de estado devueltos por Mercado Pago
+  const rawMpStatus = searchParams.get("collection_status") || searchParams.get("status") || "approved";
+  const incomingPaymentId = searchParams.get("payment_id") || searchParams.get("collection_id");
 
   const [order, setOrder] = useState<Order | null>(null);
-  const [currentStatus, setCurrentStatus] = useState<string>(initialStatusParam);
+  const [currentStatus, setCurrentStatus] = useState<string>(rawMpStatus);
   const [emailNotification, setEmailNotification] = useState<string | null>(null);
 
   useEffect(() => {
-    if (!orderId) return;
-
-    const db = getDatabase();
-    const foundOrder = db.orders.find((o) => o.id === orderId);
-
-    if (foundOrder) {
-      applyMercadoPagoStatus(foundOrder, initialStatusParam);
+    // Si no vino en la URL, intentar rescatar el último pedido de sessionStorage o localStorage
+    let orderIdToUse = urlOrderId;
+    if (!orderIdToUse && typeof window !== "undefined") {
+      orderIdToUse = sessionStorage.getItem("grabamil_last_order_id") || localStorage.getItem("grabamil_last_order_id");
     }
-  }, [orderId, initialStatusParam]);
 
-  const applyMercadoPagoStatus = (targetOrder: Order, mpStatus: string) => {
+    if (orderIdToUse) {
+      setEffectiveOrderId(orderIdToUse);
+      const db = getDatabase();
+      const foundOrder = db.orders.find((o) => o.id === orderIdToUse || o.orderNumber === orderIdToUse);
+
+      if (foundOrder) {
+        applyMercadoPagoStatus(foundOrder, rawMpStatus, incomingPaymentId);
+      }
+    }
+  }, [urlOrderId, rawMpStatus, incomingPaymentId]);
+
+  const applyMercadoPagoStatus = (targetOrder: Order, mpStatus: string, realPaymentId?: string | null) => {
     const db = getDatabase();
     let targetStatus: OrderStatus | undefined;
 
@@ -49,9 +61,16 @@ function TransactionResultContent() {
      * - "Pendiente de pago" siempre y cuando la api de mercado pago aun no haya reportado el pago exitoso
      * - "Cancelado por falta de pago" siempre y cuando la api de mercado pago haya reportado un mensaje de rechazo
      */
-    if (mpStatus === "approved") {
+    const normalizedStatus =
+      mpStatus === "approved"
+        ? "approved"
+        : mpStatus === "pending" || mpStatus === "in_process"
+        ? "pending"
+        : "rejected";
+
+    if (normalizedStatus === "approved") {
       targetStatus = db.orderStatuses.find((s) => s.isDefaultInitial);
-    } else if (mpStatus === "pending") {
+    } else if (normalizedStatus === "pending") {
       targetStatus = db.orderStatuses.find((s) => s.isPendingPayment);
     } else {
       targetStatus = db.orderStatuses.find((s) => s.isCancelled);
@@ -60,13 +79,13 @@ function TransactionResultContent() {
     if (!targetStatus) return;
 
     const timestamp = new Date().toISOString();
-    const paymentId = `MP-${Math.floor(1000000000 + Math.random() * 9000000000)}`;
+    const finalPaymentId = realPaymentId || targetOrder.mercadoPagoPaymentId || `MP-${Math.floor(1000000000 + Math.random() * 9000000000)}`;
 
     const updatedOrder: Order = {
       ...targetOrder,
       statusId: targetStatus.id,
-      mercadoPagoStatus: mpStatus,
-      mercadoPagoPaymentId: paymentId,
+      mercadoPagoStatus: normalizedStatus,
+      mercadoPagoPaymentId: finalPaymentId,
       updatedAt: timestamp,
       statusHistory: [
         ...(targetOrder.statusHistory || []),
@@ -74,7 +93,7 @@ function TransactionResultContent() {
           statusId: targetStatus.id,
           statusName: targetStatus.name,
           timestamp,
-          note: `Respuesta API Mercado Pago: ${mpStatus.toUpperCase()} (ID: ${paymentId})`,
+          note: `Respuesta API Mercado Pago: ${normalizedStatus.toUpperCase()} (ID: ${finalPaymentId})`,
         },
       ],
     };
@@ -82,7 +101,7 @@ function TransactionResultContent() {
     const updatedOrders = db.orders.map((o) => (o.id === targetOrder.id ? updatedOrder : o));
     saveDatabase({ ...db, orders: updatedOrders });
     setOrder(updatedOrder);
-    setCurrentStatus(mpStatus);
+    setCurrentStatus(normalizedStatus);
 
     // Notificación automática por correo a cliente y administrador
     setEmailNotification(
