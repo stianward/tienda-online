@@ -168,9 +168,20 @@ export default function FormBuilder({
   );
 
   const [selectedElementId, setSelectedElementId] = useState<string | null>(
-    elements[0]?.id || null
+    initialForm?.elements?.[0]?.id || "elem-1"
   );
   const [previewMode, setPreviewMode] = useState(false);
+
+  // Sincronizar el estado del constructor cuando se seleccione un formulario para editar
+  React.useEffect(() => {
+    if (initialForm) {
+      setName(initialForm.name);
+      setFormTypeId(initialForm.formTypeId);
+      setCustomTableId(initialForm.customTableId);
+      setElements(initialForm.elements);
+      setSelectedElementId(initialForm.elements[0]?.id || null);
+    }
+  }, [initialForm]);
 
   // Sensores para Drag & Drop
   const sensors = useSensors(
@@ -274,8 +285,26 @@ export default function FormBuilder({
 
   return (
     <div className="space-y-6">
+      {/* Banner de Modo Edición */}
+      {initialForm && (
+        <div className="flex flex-wrap items-center justify-between gap-2 p-3.5 bg-amber-50 border border-amber-200 rounded-2xl text-xs text-amber-950 shadow-xs">
+          <div className="flex items-center gap-2.5">
+            <span className="font-bold bg-amber-200 text-amber-900 px-2.5 py-0.5 rounded-md font-mono text-[10px] uppercase tracking-wider">
+              Modo Edición
+            </span>
+            <span>
+              Editando formulario: <strong>{initialForm.name}</strong> (ID: <code className="font-mono text-[11px] bg-white px-1.5 py-0.5 rounded border border-amber-300">{initialForm.id}</code>)
+            </span>
+          </div>
+          <div className="text-[11px] text-amber-800 font-medium">
+            Creado: {new Date(initialForm.createdAt).toLocaleDateString("es-CO")}
+            {initialForm.updatedAt && ` • Última modificación: ${new Date(initialForm.updatedAt).toLocaleTimeString("es-CO", { hour: "2-digit", minute: "2-digit" })}`}
+          </div>
+        </div>
+      )}
+
       {/* Barra superior de acciones */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-4 bg-white rounded-2xl border border-slate-200 shadow-sm">
+      <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 p-5 bg-white rounded-2xl border border-slate-200 shadow-sm">
         <div className="flex-1 max-w-md">
           <label className="block text-[11px] font-bold uppercase tracking-wider text-slate-500 mb-1">
             Nombre del Formulario
@@ -290,7 +319,7 @@ export default function FormBuilder({
           />
         </div>
 
-        <div className="flex items-center gap-3">
+        <div className="flex flex-wrap items-center gap-3">
           <div>
             <label className="block text-[11px] font-bold uppercase tracking-wider text-slate-500 mb-1">
               Tipo de Formulario
@@ -308,6 +337,26 @@ export default function FormBuilder({
             </select>
           </div>
 
+          {isProductType && (
+            <div>
+              <label className="block text-[11px] font-bold uppercase tracking-wider text-slate-500 mb-1">
+                Tabla 3D Vinculada
+              </label>
+              <select
+                value={customTableId || ""}
+                onChange={(e) => setCustomTableId(e.target.value || undefined)}
+                className="px-3 py-2 text-xs font-bold border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-white text-slate-800"
+              >
+                <option value="">-- Sin tabla asociada --</option>
+                {customTables.map((t) => (
+                  <option key={t.id} value={t.id}>
+                    {t.name}
+                  </option>
+                ))}
+              </select>
+            </div>
+          )}
+
           <div className="flex items-end gap-2 pt-5">
             <button
               type="button"
@@ -324,11 +373,19 @@ export default function FormBuilder({
 
             <button
               type="button"
+              onClick={onCancel}
+              className="px-3.5 py-2 rounded-lg text-xs font-semibold text-slate-600 hover:bg-slate-100 border border-slate-200 transition"
+            >
+              Descartar
+            </button>
+
+            <button
+              type="button"
               onClick={handleSave}
-              className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-xs font-bold shadow-md shadow-indigo-600/20 transition flex items-center gap-1.5"
+              className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-xs font-bold shadow-md shadow-indigo-600/20 transition flex items-center gap-1.5 cursor-pointer"
             >
               <Check className="w-4 h-4" />
-              <span>Guardar Formulario</span>
+              <span>{initialForm ? "Guardar Cambios" : "Crear Formulario"}</span>
             </button>
           </div>
         </div>

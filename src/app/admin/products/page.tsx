@@ -1,9 +1,10 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
+import Link from "next/link";
 import { getDatabase, saveDatabase } from "@/lib/data-store";
 import { Product, ProductCategory, CustomForm } from "@/types";
-import { Package, Plus, Trash2, Edit2, CheckCircle2, Image as ImageIcon } from "lucide-react";
+import { Package, Plus, Trash2, Edit2, CheckCircle2, Image as ImageIcon, FileText } from "lucide-react";
 
 export default function ProductsAdminPage() {
   const [products, setProducts] = useState<Product[]>([]);
@@ -205,13 +206,23 @@ export default function ProductsAdminPage() {
                     {product.description}
                   </p>
 
-                  <div className="pt-2 border-t border-slate-100 text-xs">
-                    <p className="text-slate-500 text-[11px]">
-                      Formulario ID asignado:{" "}
+                  <div className="pt-2 border-t border-slate-100 text-xs flex items-center justify-between">
+                    <p className="text-slate-500 text-[11px] truncate">
+                      Formulario:{" "}
                       <strong className="text-slate-800">
                         {formObj ? formObj.name : "Ninguno"}
                       </strong>
                     </p>
+                    {formObj && (
+                      <Link
+                        href={`/admin/custom-forms?edit=${formObj.id}`}
+                        className="text-[11px] font-bold text-indigo-600 hover:text-indigo-800 flex items-center gap-1 shrink-0 ml-2"
+                        title="Editar este formulario personalizado"
+                      >
+                        <FileText className="w-3 h-3" />
+                        <span>Editar</span>
+                      </Link>
+                    )}
                   </div>
                 </div>
               </div>
