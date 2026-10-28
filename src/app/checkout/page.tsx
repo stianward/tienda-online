@@ -1,0 +1,240 @@
+"use client";
+
+import React, { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
+import Link from "next/link";
+import { getDatabase, saveDatabase } from "@/lib/data-store";
+import { CustomForm, Order } from "@/types";
+import {
+  CreditCard,
+  ArrowLeft,
+  ShoppingBag,
+  ShieldCheck,
+  Lock,
+  CheckCircle2,
+  AlertCircle,
+  ExternalLink,
+} from "lucide-react";
+import DynamicFormRenderer from "@/components/dynamic-form/DynamicFormRenderer";
+
+export default function CheckoutBillingPage() {
+  const router = useRouter();
+  const [draftOrder, setDraftOrder] = useState<any>(null);
+  const [clientForm, setClientForm] = useState<CustomForm | null>(null);
+  const [isProcessing, setIsProcessing] = useState(false);
+
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      const saved = sessionStorage.getItem("grabamil_draft_order");
+      if (saved) {
+        setDraftOrder(JSON.parse(saved));
+      } else {
+        router.push("/");
+      }
+    }
+
+    const db = getDatabase();
+    // Buscar formulario de tipo CLIENTE para facturación
+    const clientType = db.formTypes.find((ft) => ft.name === "CLIENTE");
+    const foundForm = db.customForms.find((f) => f.formTypeId === clientType?.id);
+    setClientForm(foundForm || db.customForms[0]);
+  }, [router]);
+
+  if (!draftOrder || !clientForm) {
+    return (
+      <div className="min-h-screen flex items-center justify-center p-6 bg-slate-50 text-slate-500 text-sm">
+        Cargando orden de compra...
+      </div>
+    );
+  }
+
+  // Enviar a Mercado Pago
+  const handleProceedPayment = async (customerBillingData: Record<string, any>) => {
+    setIsProcessing(true);
+
+    try {
+      // 1. Generar número de orden único
+      const orderNumber = `GRB-${Math.floor(10000 + Math.random() * 90000)}`;
+      const orderId = `ord-${Date.now().toString(36)}-${Math.random().toString(36).substring(2, 6)}`;
+
+      // 2. Crear orden en estado "Pendiente de pago" inicialmente
+      const db = getDatabase();
+      const pendingStatus =
+        db.orderStatuses.find((s) => s.isPendingPayment) || db.orderStatuses[1];
+
+      const newOrder: Order = {
+        id: orderId,
+        orderNumber,
+        productId: draftOrder.productId,
+        productName: draftOrder.productName,
+        unitPrice: draftOrder.unitPrice,
+        quantity: draftOrder.quantity,
+        total: draftOrder.total,
+        customerData: {
+          name: customerBillingData["Nombre Completo"] || customerBillingData.name || "Cliente GrabaMil",
+          email: customerBillingData["Correo Electrónico"] || customerBillingData.email || "cliente@ejemplo.com",
+          phone: customerBillingData["Teléfono / WhatsApp"] || customerBillingData.phone || "",
+          address: customerBillingData["Dirección de Entrega y Ciudad"] || customerBillingData.address || "",
+          ...customerBillingData,
+        },
+        customFormData: draftOrder.customFormData || {},
+        tableData: draftOrder.tableData || [],
+        statusId: pendingStatus.id,
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+        statusHistory: [
+          {
+            statusId: pendingStatus.id,
+            statusName: pendingStatus.name,
+            timestamp: new Date().toISOString(),
+            note: "Orden generada. Redirigiendo a pasarela Mercado Pago.",
+          },
+        ],
+      };
+
+      // Guardar en la base de datos
+      saveDatabase({
+        ...db,
+        orders: [newOrder, ...db.orders],
+      });
+
+      // Guardar referencia activa
+      if (typeof window !== "undefined") {
+        sessionStorage.setItem("grabamil_last_order_id", newOrder.id);
+      }
+
+      // Redirigir a la simulación interactiva de Mercado Pago o resultado de transacción
+      setTimeout(() => {
+        router.push(`/transaction-result?order_id=${newOrder.id}&status=approved`);
+      }, 1000);
+    } catch (error) {
+      console.error("Error creating order:", error);
+      alert("Hubo un error al procesar la facturación. Por favor intenta de nuevo.");
+      setIsProcessing(false);
+    }
+  };
+
+  return (
+    <div className="min-h-screen bg-slate-50 flex flex-col">
+      {/* Header */}
+      <header className="bg-white border-b border-slate-200 sticky top-0 z-40">
+        <div className="max-w-5xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between">
+          <Link
+            href="/"
+            className="flex items-center gap-2 text-xs font-bold text-slate-600 hover:text-slate-900 transition"
+          >
+            <ArrowLeft className="w-4 h-4" />
+            <span>Regresar a la Tienda</span>
+          </Link>
+          <div className="flex items-center gap-2 text-xs font-bold text-emerald-700 bg-emerald-50 px-3 py-1 rounded-full border border-emerald-200">
+            <Lock className="w-3.5 h-3.5" />
+            <span>Checkout Seguro Mercado Pago</span>
+          </div>
+        </div>
+      </header>
+
+      {/* Main Content */}
+      <main className="max-w-5xl mx-auto px-4 sm:px-6 py-8 flex-1 w-full space-y-8">
+        <div>
+          <h1 className="text-2xl font-black text-slate-900 tracking-tight flex items-center gap-2">
+            <CreditCard className="w-7 h-7 text-indigo-600" />
+            Módulo de Facturación y Pago
+          </h1>
+          <p className="text-xs text-slate-500 mt-1">
+            Formulario embebido del módulo de formularios personalizados que captura los datos de envío y facturación para enviar a la API de Mercado Pago.
+          </p>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-12 gap-8 items-start">
+          {/* Formulario de Facturación Embebido */}
+          <div className="md:col-span-7 bg-white p-6 sm:p-8 rounded-3xl border border-slate-200 shadow-sm space-y-6">
+            <div className="border-b border-slate-100 pb-3">
+              <span className="text-[10px] font-bold uppercase tracking-wider text-indigo-600 bg-indigo-50 px-2 py-0.5 rounded">
+                Formulario Embebido: {clientForm.name}
+              </span>
+              <h2 className="text-base font-bold text-slate-900 mt-2">
+                Información del Cliente y Facturación
+              </h2>
+            </div>
+
+            <DynamicFormRenderer
+              form={clientForm}
+              submitButtonText={isProcessing ? "Procesando con Mercado Pago..." : "Pagar con Mercado Pago"}
+              cancelButtonText="Modificar Pedido"
+              onSubmit={handleProceedPayment}
+              onCancel={() => router.back()}
+            />
+          </div>
+
+          {/* Resumen del Pedido */}
+          <div className="md:col-span-5 space-y-4">
+            <div className="bg-white p-6 rounded-3xl border border-slate-200 shadow-sm space-y-4">
+              <h3 className="text-xs font-bold uppercase tracking-wider text-slate-400">
+                Resumen de tu Compra
+              </h3>
+
+              <div className="flex items-start gap-3 pb-4 border-b border-slate-100">
+                <div className="p-3 bg-indigo-50 text-indigo-600 rounded-xl">
+                  <ShoppingBag className="w-5 h-5" />
+                </div>
+                <div className="flex-1">
+                  <h4 className="font-bold text-xs text-slate-900">
+                    {draftOrder.productName}
+                  </h4>
+                  <p className="text-[11px] text-slate-500 mt-0.5">
+                    Cantidad: {draftOrder.quantity} un. • ${draftOrder.unitPrice.toLocaleString("es-CO")} c/u
+                  </p>
+                </div>
+              </div>
+
+              {/* Especificaciones personalizadas diligenciadas */}
+              {Object.keys(draftOrder.customFormData || {}).length > 0 && (
+                <div className="space-y-1 text-xs bg-slate-50 p-3 rounded-xl border border-slate-100">
+                  <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500 block mb-1">
+                    Personalización Seleccionada:
+                  </span>
+                  {Object.entries(draftOrder.customFormData).map(([k, v]) => (
+                    <div key={k} className="flex justify-between text-[11px]">
+                      <span className="text-slate-500">{k}:</span>
+                      <strong className="text-slate-800">{String(v)}</strong>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              {/* Totales */}
+              <div className="space-y-2 pt-2 text-xs">
+                <div className="flex justify-between text-slate-500">
+                  <span>Subtotal productos:</span>
+                  <span>${draftOrder.total.toLocaleString("es-CO")}</span>
+                </div>
+                <div className="flex justify-between text-slate-500">
+                  <span>Envío nacional asegurado:</span>
+                  <span className="text-emerald-600 font-bold">GRATIS</span>
+                </div>
+                <div className="flex justify-between text-base font-black text-slate-900 pt-2 border-t border-slate-100">
+                  <span>Total a Pagar:</span>
+                  <span className="text-indigo-600">
+                    ${draftOrder.total.toLocaleString("es-CO")}
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            {/* Mercado Pago Security Badge */}
+            <div className="p-4 rounded-2xl bg-sky-50 border border-sky-100 text-sky-950 text-xs space-y-2">
+              <div className="flex items-center gap-2 font-bold">
+                <ShieldCheck className="w-4 h-4 text-sky-600" />
+                <span>Pasarela Oficial Mercado Pago</span>
+              </div>
+              <p className="text-[11px] text-sky-800 leading-relaxed">
+                Tus pagos son procesados de forma cifrada mediante Mercado Pago. Se admiten tarjetas de crédito, PSE, Efecty y dinero en cuenta.
+              </p>
+            </div>
+          </div>
+        </div>
+      </main>
+    </div>
+  );
+}
+
