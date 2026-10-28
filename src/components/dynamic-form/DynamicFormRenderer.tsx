@@ -3,7 +3,7 @@
 import React, { useState } from "react";
 import { CustomForm, CustomTable, Render3D } from "@/types";
 import InteractiveCustomTable from "./InteractiveCustomTable";
-import { X, Send } from "lucide-react";
+import { X, Send, AlertCircle } from "lucide-react";
 
 interface DynamicFormRendererProps {
   form: CustomForm;
@@ -32,8 +32,26 @@ export default function DynamicFormRenderer({
   cancelButtonText,
   className = "",
 }: DynamicFormRendererProps) {
-  const [formData, setFormData] = useState<Record<string, any>>(initialValues);
-  const [tableRows, setTableRows] = useState<Record<string, string | number>[]>(initialTableRows);
+  // Pre-cargar valores por defecto si los campos tienen opciones
+  const [formData, setFormData] = useState<Record<string, any>>(() => {
+    const defaults: Record<string, any> = { ...initialValues };
+    form.elements.forEach((elem) => {
+      if (defaults[elem.id] === undefined) {
+        if (elem.type === "select" && elem.options && elem.options.length > 0) {
+          defaults[elem.id] = elem.options[0];
+        } else if (elem.type === "radio" && elem.options && elem.options.length > 0) {
+          defaults[elem.id] = elem.options[0];
+        }
+      }
+    });
+    return defaults;
+  });
+
+  const [tableRows, setTableRows] = useState<Record<string, string | number>[]>(() => {
+    if (initialTableRows && initialTableRows.length > 0) return initialTableRows;
+    if (customTable?.initialRows && customTable.initialRows.length > 0) return customTable.initialRows;
+    return [];
+  });
   const [errors, setErrors] = useState<Record<string, string>>({});
 
   const handleTableRowsUpdate = (newRows: Record<string, string | number>[]) => {
@@ -61,13 +79,26 @@ export default function DynamicFormRenderer({
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
 
-    // Validar campos obligatorios
+    // Validar campos obligatorios (excluyendo botones, labels y custom_table)
     const newErrors: Record<string, string> = {};
     form.elements.forEach((elem) => {
-      if (elem.required && !elem.type.startsWith("button_") && elem.type !== "label") {
+      if (
+        elem.required &&
+        !elem.type.startsWith("button_") &&
+        elem.type !== "label" &&
+        elem.type !== "custom_table"
+      ) {
         const val = formData[elem.id];
         if (val === undefined || val === null || val === "" || (Array.isArray(val) && val.length === 0)) {
           newErrors[elem.id] = `El campo "${elem.label}" es obligatorio.`;
+        }
+      }
+
+      // Validar tabla personalizada: debe existir al menos un registro
+      if (elem.type === "custom_table" && elem.required && customTable) {
+        const rowsToCheck = tableRows.length > 0 ? tableRows : customTable.initialRows || [];
+        if (!rowsToCheck || rowsToCheck.length === 0) {
+          newErrors[elem.id] = `Debes configurar al menos una fila en la tabla "${customTable.name}".`;
         }
       }
     });
@@ -85,7 +116,8 @@ export default function DynamicFormRenderer({
       }
     });
 
-    onSubmit(readableData, customTable ? tableRows : undefined);
+    const rowsToSend = tableRows.length > 0 ? tableRows : customTable?.initialRows || undefined;
+    onSubmit(readableData, customTable ? rowsToSend : undefined);
   };
 
   const handleCancel = () => {
@@ -209,6 +241,12 @@ export default function DynamicFormRenderer({
                   value={tableRows}
                   onChange={handleTableRowsUpdate}
                 />
+                {errors[elem.id] && (
+                  <p className="text-xs text-rose-500 font-bold mt-1.5 flex items-center gap-1">
+                    <AlertCircle className="w-3.5 h-3.5" />
+                    <span>{errors[elem.id]}</span>
+                  </p>
+                )}
               </div>
             );
 
@@ -241,6 +279,21 @@ export default function DynamicFormRenderer({
             return null;
         }
       })}
+
+      {/* Banner de Errores si hay campos pendientes */}
+      {Object.keys(errors).length > 0 && (
+        <div className="p-3.5 bg-rose-50 border border-rose-200 rounded-xl text-xs text-rose-800 space-y-1">
+          <p className="font-bold flex items-center gap-1.5 text-rose-900">
+            <AlertCircle className="w-4 h-4 text-rose-600 shrink-0" />
+            <span>Por favor completa los siguientes campos obligatorios para continuar:</span>
+          </p>
+          <ul className="list-disc list-inside space-y-0.5 text-rose-700 pl-1">
+            {Object.values(errors).map((err, i) => (
+              <li key={i}>{err}</li>
+            ))}
+          </ul>
+        </div>
+      )}
 
       {/* Si el formulario no tenía botones explícitos, agregar la botonera por defecto */}
       {(!hasCustomSubmit || !hasCustomCancel) && (

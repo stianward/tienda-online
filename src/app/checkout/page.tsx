@@ -25,7 +25,9 @@ export default function CheckoutBillingPage() {
 
   useEffect(() => {
     if (typeof window !== "undefined") {
-      const saved = sessionStorage.getItem("grabamil_draft_order");
+      const saved =
+        sessionStorage.getItem("grabamil_draft_order") ||
+        localStorage.getItem("grabamil_draft_order");
       if (saved) {
         setDraftOrder(JSON.parse(saved));
       } else {

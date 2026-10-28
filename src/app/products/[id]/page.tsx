@@ -96,6 +96,7 @@ function ProductDetailContent() {
 
     if (typeof window !== "undefined") {
       sessionStorage.setItem("grabamil_draft_order", JSON.stringify(draftOrder));
+      localStorage.setItem("grabamil_draft_order", JSON.stringify(draftOrder));
     }
 
     router.push("/checkout");
