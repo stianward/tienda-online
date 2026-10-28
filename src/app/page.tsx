@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from "react";
 import Link from "next/link";
-import { getDatabase, DatabaseState } from "@/lib/data-store";
+import { getDatabase, INITIAL_DATABASE_STATE, DatabaseState } from "@/lib/data-store";
 import { Product, ProductCategory } from "@/types";
 import {
   ShoppingBag,
@@ -16,7 +16,7 @@ import {
 } from "lucide-react";
 
 export default function ShopHomePage() {
-  const [db, setDb] = useState<DatabaseState | null>(null);
+  const [db, setDb] = useState<DatabaseState>(INITIAL_DATABASE_STATE);
   const [selectedCategory, setSelectedCategory] = useState<string>("all");
 
   useEffect(() => {
@@ -25,8 +25,6 @@ export default function ShopHomePage() {
     window.addEventListener("grabamil_db_changed", onDbChange);
     return () => window.removeEventListener("grabamil_db_changed", onDbChange);
   }, []);
-
-  if (!db) return null;
 
   const filteredProducts = db.products.filter((p) => {
     if (p.status !== "activo") return false;

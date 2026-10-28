@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import { useAuth } from "@/context/AuthContext";
-import { getDatabase, DatabaseState } from "@/lib/data-store";
+import { getDatabase, INITIAL_DATABASE_STATE, DatabaseState } from "@/lib/data-store";
 import {
   ShoppingBag,
   Package,
@@ -18,7 +18,7 @@ import {
 
 export default function AdminDashboardPage() {
   const { currentRole, currentProfile, hasAccess } = useAuth();
-  const [db, setDb] = useState<DatabaseState | null>(null);
+  const [db, setDb] = useState<DatabaseState>(INITIAL_DATABASE_STATE);
 
   useEffect(() => {
     setDb(getDatabase());
@@ -26,8 +26,6 @@ export default function AdminDashboardPage() {
     window.addEventListener("grabamil_db_changed", onDbChange);
     return () => window.removeEventListener("grabamil_db_changed", onDbChange);
   }, []);
-
-  if (!db) return null;
 
   const totalOrders = db.orders.length;
   const totalRevenue = db.orders

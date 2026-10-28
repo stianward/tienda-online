@@ -2,7 +2,7 @@
 
 import React, { createContext, useContext, useState, useEffect } from "react";
 import { User, Role, Profile, ModuleKey, RoleType } from "@/types";
-import { getDatabase } from "@/lib/data-store";
+import { getDatabase, INITIAL_DATABASE_STATE } from "@/lib/data-store";
 
 interface AuthContextType {
   currentUser: User | null;
@@ -18,14 +18,29 @@ interface AuthContextType {
   reloadAuth: () => void;
 }
 
+const defaultModules: Record<ModuleKey, boolean> = {
+  users: true,
+  roles: true,
+  roles_profiles: true,
+  profiles: true,
+  categories: true,
+  order_statuses: true,
+  form_types: true,
+  custom_forms: true,
+  custom_tables: true,
+  renders: true,
+  products: true,
+  orders: true,
+};
+
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
-  const [currentUser, setCurrentUser] = useState<User | null>(null);
-  const [currentRole, setCurrentRole] = useState<Role | null>(null);
-  const [currentProfile, setCurrentProfile] = useState<Profile | null>(null);
-  const [allowedModules, setAllowedModules] = useState<Record<ModuleKey, boolean>>({} as any);
-  const [allUsers, setAllUsers] = useState<User[]>([]);
+  const [currentUser, setCurrentUser] = useState<User | null>(INITIAL_DATABASE_STATE.users[0]);
+  const [currentRole, setCurrentRole] = useState<Role | null>(INITIAL_DATABASE_STATE.roles[0]);
+  const [currentProfile, setCurrentProfile] = useState<Profile | null>(INITIAL_DATABASE_STATE.profiles[0]);
+  const [allowedModules, setAllowedModules] = useState<Record<ModuleKey, boolean>>(defaultModules);
+  const [allUsers, setAllUsers] = useState<User[]>(INITIAL_DATABASE_STATE.users);
 
   const loadUserData = (preferredUserId?: string) => {
     const db = getDatabase();
