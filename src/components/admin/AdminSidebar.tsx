@@ -40,9 +40,14 @@ const ICON_MAP: Record<string, React.ElementType> = {
 export default function AdminSidebar() {
   const pathname = usePathname();
   const { hasAccess, currentRole, currentProfile, currentUser } = useAuth();
+  const [mounted, setMounted] = React.useState(false);
 
-  // Filtrar los módulos según los permisos del perfil activo
-  const visibleModules = SYSTEM_MODULES.filter((mod) => hasAccess(mod.id));
+  React.useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  // Filtrar los módulos según los permisos del perfil activo (o mostrar todos durante el primer render)
+  const visibleModules = mounted ? SYSTEM_MODULES.filter((mod) => hasAccess(mod.id)) : SYSTEM_MODULES;
 
   return (
     <aside className="w-64 bg-slate-900 border-r border-slate-800 flex flex-col shrink-0 min-h-screen">

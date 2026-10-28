@@ -8,6 +8,11 @@ import Link from "next/link";
 
 export default function AdminHeader() {
   const { currentUser, allUsers, loginAs, currentRole } = useAuth();
+  const [mounted, setMounted] = React.useState(false);
+
+  React.useEffect(() => {
+    setMounted(true);
+  }, []);
 
   const handleResetData = () => {
     if (confirm("¿Deseas restaurar la base de datos a sus valores iniciales predeterminados?")) {
