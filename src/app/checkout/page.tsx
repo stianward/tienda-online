@@ -112,12 +112,15 @@ export default function CheckoutBillingPage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           title: newOrder.productName,
+          description: `Pedido ${newOrder.orderNumber} - ${newOrder.quantity} unidad(es)`,
           quantity: newOrder.quantity,
           unit_price: newOrder.unitPrice,
           orderId: newOrder.id,
           payer: {
             name: newOrder.customerData.name,
             email: newOrder.customerData.email,
+            phone: newOrder.customerData.phone,
+            address: newOrder.customerData.address,
           },
         }),
       });

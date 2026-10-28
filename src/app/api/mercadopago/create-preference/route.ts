@@ -4,7 +4,7 @@ import { mpPreference } from "@/lib/mercadopago/client";
 export async function POST(request: Request) {
   try {
     const body = await request.json();
-    const { title, quantity, unit_price, orderId, payer } = body;
+    const { title, description, quantity, unit_price, orderId, payer } = body;
 
     const host = request.headers.get("host") || "localhost:3000";
     const protocol = host.includes("localhost") ? "http" : "https";
@@ -20,6 +20,7 @@ export async function POST(request: Request) {
             {
               id: String(orderId || "item-1"),
               title: String(title || "Producto Personalizado GrabaMil"),
+              description: String(description || "Grabado y personalización de alta precisión GrabaMil"),
               quantity: Math.max(1, Number(quantity) || 1),
               unit_price: Math.max(1, Number(unit_price) || 10000),
               currency_id: "COP",
@@ -29,6 +30,8 @@ export async function POST(request: Request) {
             ? {
                 name: payer.name || "Cliente",
                 email: payer.email || "cliente@ejemplo.com",
+                phone: payer.phone ? { number: String(payer.phone) } : undefined,
+                address: payer.address ? { street_name: String(payer.address) } : undefined,
               }
             : undefined,
           back_urls: {
@@ -37,6 +40,9 @@ export async function POST(request: Request) {
             failure: `${baseUrl}/transaction-result?order_id=${orderId}&status=rejected`,
           },
           ...(isHttps ? { auto_return: "approved" } : {}),
+          payment_methods: {
+            installments: 12,
+          },
           statement_descriptor: "GRABAMIL",
           external_reference: String(orderId),
         },
