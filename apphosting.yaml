@@ -11,5 +11,11 @@ env:
     value: production
   - variable: NEXT_PUBLIC_MERCADOPAGO_PUBLIC_KEY
     value: APP_USR-6fe96104-02f9-4868-aa2a-21ad7735de53
+  - variable: MERCADOPAGO_ACCESS_TOKEN
+    value: APP_USR-7153381609950803-102819-52c414049acb834b33e07ed4c119d712-207689336
   - variable: MERCADOPAGO_CLIENT_ID
     value: "7153381609950803"
+  - variable: MERCADOPAGO_CLIENT_SECRET
+    value: 9t1FUmTE4Pw0RSwOVMAH4vZf4pQ86vAs
+  - variable: NEXT_PUBLIC_APP_URL
+    value: https://grabamil-1721f.web.app
