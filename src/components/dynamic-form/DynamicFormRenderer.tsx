@@ -162,7 +162,7 @@ export default function DynamicFormRenderer({
                   placeholder={elem.placeholder || `Ingresa ${elem.label.toLowerCase()}`}
                   value={formData[elem.id] ?? ""}
                   onChange={(e) => handleInputChange(elem.id, e.target.value)}
-                  className={`w-full px-3.5 py-2.5 text-sm rounded-lg border bg-white focus:outline-none focus:ring-2 transition ${
+                  className={`w-full px-3.5 py-2.5 text-base sm:text-sm rounded-lg border bg-white focus:outline-none focus:ring-2 transition ${
                     errors[elem.id]
                       ? "border-rose-300 ring-rose-200 focus:ring-rose-400"
                       : "border-slate-300 focus:border-indigo-500 focus:ring-indigo-100"
@@ -182,7 +182,7 @@ export default function DynamicFormRenderer({
                 <select
                   value={formData[elem.id] ?? ""}
                   onChange={(e) => handleInputChange(elem.id, e.target.value)}
-                  className="w-full px-3.5 py-2.5 text-sm rounded-lg border border-slate-300 bg-white focus:outline-none focus:ring-2 focus:ring-indigo-100 focus:border-indigo-500 font-medium text-slate-800"
+                  className="w-full px-3.5 py-2.5 text-base sm:text-sm rounded-lg border border-slate-300 bg-white focus:outline-none focus:ring-2 focus:ring-indigo-100 focus:border-indigo-500 font-medium text-slate-800"
                 >
                   <option value="">{elem.placeholder || "-- Seleccione una opción --"}</option>
                   {elem.options?.map((opt) => (

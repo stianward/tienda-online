@@ -154,7 +154,7 @@ export default function InteractiveCustomTable({
                           <select
                             value={String(row[col.id] || "")}
                             onChange={(e) => handleCellChange(rIdx, col.id, e.target.value)}
-                            className="w-full text-xs font-medium bg-slate-50 border border-slate-300 rounded-md py-1.5 px-2 focus:ring-2 focus:ring-indigo-500 focus:outline-none"
+                            className="w-full text-base sm:text-xs font-medium bg-slate-50 border border-slate-300 rounded-lg py-2 sm:py-1.5 px-2.5 sm:px-2 focus:ring-2 focus:ring-indigo-500 focus:outline-none min-h-[40px] sm:min-h-0"
                           >
                             {col.options.map((opt) => (
                               <option key={opt} value={opt}>
@@ -174,7 +174,7 @@ export default function InteractiveCustomTable({
                               )
                             }
                             placeholder={col.header}
-                            className="w-full text-xs bg-slate-50 border border-slate-300 rounded-md py-1.5 px-2 focus:ring-2 focus:ring-indigo-500 focus:outline-none font-medium text-slate-800"
+                            className="w-full text-base sm:text-xs bg-slate-50 border border-slate-300 rounded-lg py-2 sm:py-1.5 px-2.5 sm:px-2 focus:ring-2 focus:ring-indigo-500 focus:outline-none font-medium text-slate-800 min-h-[40px] sm:min-h-0"
                           />
                         )}
                       </td>
@@ -191,7 +191,7 @@ export default function InteractiveCustomTable({
                             setIs3DModalOpen(true);
                           }}
                           title="Abrir este registro en el visor 3D"
-                          className={`inline-flex items-center gap-1 px-2 py-1 rounded-md text-xs font-semibold transition ${
+                          className={`inline-flex items-center justify-center gap-1.5 px-2.5 py-2 rounded-lg text-xs font-bold transition min-h-[40px] cursor-pointer ${
                             isSelected
                               ? "bg-indigo-600 text-white shadow-xs"
                               : "text-indigo-600 bg-indigo-50 hover:bg-indigo-100"
@@ -212,7 +212,7 @@ export default function InteractiveCustomTable({
                             e.stopPropagation();
                             handleRemoveRow(rIdx);
                           }}
-                          className={`p-1.5 rounded-md transition ${
+                          className={`p-2.5 rounded-lg transition min-w-[44px] min-h-[44px] flex items-center justify-center cursor-pointer ${
                             rows.length <= 1
                               ? "text-slate-300 cursor-not-allowed"
                               : "text-rose-500 hover:bg-rose-50 hover:text-rose-700"
@@ -231,16 +231,16 @@ export default function InteractiveCustomTable({
         </div>
 
         {!readOnly && (
-          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 pt-1">
+          <div className="flex flex-col sm:flex-row justify-between items-stretch sm:items-center gap-2.5 pt-1">
             <button
               type="button"
               onClick={handleAddRow}
-              className="inline-flex items-center gap-1.5 text-xs font-bold text-indigo-700 hover:text-indigo-900 bg-indigo-50 hover:bg-indigo-100 px-3.5 py-2 rounded-xl border border-indigo-200 transition shadow-xs cursor-pointer"
+              className="inline-flex items-center justify-center gap-2 text-xs font-bold text-indigo-700 hover:text-indigo-900 bg-indigo-50 hover:bg-indigo-100 px-4 py-3 rounded-xl border border-indigo-200 transition shadow-xs cursor-pointer w-full sm:w-auto min-h-[44px]"
             >
               <Plus className="w-4 h-4" />
               <span>Agregar otra pieza / fila (+1 unidad al pedido)</span>
             </button>
-            <span className="text-[11px] text-slate-500">
+            <span className="text-[11px] text-slate-500 text-center sm:text-right">
               Total filas en tabla: <strong>{rows.length}</strong> (representa <strong>{rows.length}</strong> {rows.length === 1 ? "unidad" : "unidades"} a cobrar)
             </span>
           </div>
@@ -251,22 +251,22 @@ export default function InteractiveCustomTable({
       {/* MODAL DE PREVISUALIZACIÓN 3D (Requerimiento explícito) */}
       {/* ======================================================== */}
       {is3DModalOpen && renderConfig && (
-        <div className="fixed inset-0 z-50 bg-black/75 backdrop-blur-sm flex items-center justify-center p-4 animate-in fade-in duration-200">
-          <div className="bg-slate-900 rounded-3xl border border-slate-700 shadow-2xl max-w-2xl w-full overflow-hidden flex flex-col max-h-[92vh]">
+        <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-2 sm:p-4 animate-in fade-in duration-200">
+          <div className="bg-slate-900 rounded-2xl sm:rounded-3xl border border-slate-700 shadow-2xl max-w-2xl w-full overflow-hidden flex flex-col max-h-[96vh] sm:max-h-[92vh]">
             {/* Cabecera del Modal */}
-            <div className="flex items-center justify-between px-6 py-4 bg-slate-800/90 border-b border-slate-700">
+            <div className="flex items-center justify-between px-4 sm:px-6 py-3 sm:py-4 bg-slate-800/90 border-b border-slate-700">
               <div className="flex items-center gap-2.5">
                 <div className="p-2 rounded-xl bg-indigo-500/20 text-indigo-400">
                   <Box className="w-5 h-5" />
                 </div>
                 <div>
-                  <h3 className="text-sm font-bold text-white flex items-center gap-2">
-                    <span>Previsualización 3D en Tiempo Real</span>
-                    <span className="text-[10px] font-semibold text-emerald-400 bg-emerald-950 px-2 py-0.5 rounded border border-emerald-500/30">
+                  <h3 className="text-xs sm:text-sm font-bold text-white flex items-center gap-2">
+                    <span>Previsualización 3D en Vivo</span>
+                    <span className="text-[9px] sm:text-[10px] font-semibold text-emerald-400 bg-emerald-950 px-2 py-0.5 rounded border border-emerald-500/30">
                       Sandbox Seguro
                     </span>
                   </h3>
-                  <p className="text-xs text-slate-400">
+                  <p className="text-[11px] sm:text-xs text-slate-400">
                     {renderConfig.name} • Visualizando fila #{selectedRowIndex + 1}
                   </p>
                 </div>
@@ -275,7 +275,7 @@ export default function InteractiveCustomTable({
               <button
                 type="button"
                 onClick={() => setIs3DModalOpen(false)}
-                className="text-slate-400 hover:text-white p-2 hover:bg-slate-700/80 rounded-xl transition"
+                className="text-slate-400 hover:text-white p-2.5 hover:bg-slate-700/80 rounded-xl transition min-w-[44px] min-h-[44px] flex items-center justify-center cursor-pointer"
                 title="Cerrar ventana 3D"
               >
                 <X className="w-5 h-5" />
@@ -283,7 +283,7 @@ export default function InteractiveCustomTable({
             </div>
 
             {/* Contenido del Modal: Selector rápido de fila y Visor 3D */}
-            <div className="p-6 space-y-4 flex-1 overflow-y-auto">
+            <div className="p-3 sm:p-6 space-y-3 sm:space-y-4 flex-1 overflow-y-auto">
               {/* Barra para alternar filas dentro del modal */}
               <div className="flex items-center justify-between bg-slate-800/80 p-2.5 rounded-xl border border-slate-700 text-xs">
                 <span className="text-slate-300 font-medium">

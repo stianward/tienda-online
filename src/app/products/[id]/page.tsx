@@ -121,7 +121,7 @@ function ProductDetailContent() {
       </header>
 
       {/* Main Content */}
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 flex-1 w-full space-y-8">
+      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 pb-28 lg:pb-8 flex-1 w-full space-y-8">
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
           {/* Columna Izquierda: Información del Producto & Valor Total Dinámico */}
           <div className="lg:col-span-5 space-y-6">
@@ -235,6 +235,36 @@ function ProductDetailContent() {
           </div>
         </div>
       </main>
+
+      {/* Barra Flotante Inferior en Móvil (Sticky Bottom Order Bar) */}
+      <aside className="lg:hidden fixed bottom-0 left-0 right-0 z-40 bg-white/95 backdrop-blur-md border-t border-slate-200 px-4 py-3 shadow-2xl">
+        <div className="max-w-md mx-auto flex items-center justify-between gap-3">
+          <div className="leading-tight">
+            <span className="text-[10px] uppercase font-bold text-slate-400 block">
+              Total ({effectiveQuantity} {effectiveQuantity === 1 ? "unidad" : "unidades"}):
+            </span>
+            <span className="text-lg font-black text-indigo-950">
+              ${totalPrice.toLocaleString("es-CO")}
+            </span>
+          </div>
+
+          <button
+            type="button"
+            onClick={() => {
+              const submitBtn = document.querySelector('button[type="submit"]') as HTMLButtonElement | null;
+              if (submitBtn) {
+                submitBtn.click();
+              } else {
+                handleProceedToBilling({});
+              }
+            }}
+            className="px-5 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs shadow-md shadow-indigo-600/25 transition flex items-center gap-1.5 active:scale-95 cursor-pointer"
+          >
+            <ShoppingBag className="w-4 h-4" />
+            <span>Pagar Orden</span>
+          </button>
+        </div>
+      </aside>
     </div>
   );
 }
