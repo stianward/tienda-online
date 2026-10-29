@@ -1,0 +1,15 @@
+# Configuración de Firebase App Hosting para Next.js en Google Cloud
+runConfig:
+  minInstances: 0
+  maxInstances: 2
+  concurrency: 80
+  cpu: 1
+  memoryMiB: 512
+
+env:
+  - variable: NEXT_PUBLIC_MERCADOPAGO_ENV
+    value: production
+  - variable: NEXT_PUBLIC_MERCADOPAGO_PUBLIC_KEY
+    value: APP_USR-6fe96104-02f9-4868-aa2a-21ad7735de53
+  - variable: MERCADOPAGO_CLIENT_ID
+    value: "7153381609950803"
