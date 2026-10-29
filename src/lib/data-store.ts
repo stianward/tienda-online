@@ -462,6 +462,11 @@ export function saveDatabase(nextState: DatabaseState): void {
   if (typeof window !== "undefined") {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(nextState));
     window.dispatchEvent(new CustomEvent("grabamil_db_changed", { detail: nextState }));
+
+    // Sincronizar de forma asíncrona y transparente con Cloud Firestore
+    import("@/lib/firebase/firestore-sync")
+      .then((m) => m.persistDatabaseToFirestore(nextState))
+      .catch((err) => console.warn("Firestore sync skipped:", err?.message));
   }
 }
 

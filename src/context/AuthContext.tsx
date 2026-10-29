@@ -93,12 +93,25 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     loadUserData();
 
+    // Iniciar sincronización en tiempo real con Cloud Firestore
+    let unsubscribeFirestore: (() => void) | undefined;
+    import("@/lib/firebase/firestore-sync")
+      .then((m) => {
+        unsubscribeFirestore = m.initFirestoreSync(() => {
+          loadUserData();
+        });
+      })
+      .catch((err) => console.warn("Firestore sync init warning:", err));
+
     const handleDbChange = () => {
       loadUserData();
     };
 
     window.addEventListener("grabamil_db_changed", handleDbChange);
-    return () => window.removeEventListener("grabamil_db_changed", handleDbChange);
+    return () => {
+      window.removeEventListener("grabamil_db_changed", handleDbChange);
+      if (unsubscribeFirestore) unsubscribeFirestore();
+    };
   }, []);
 
   const loginAs = (userId: string) => {
