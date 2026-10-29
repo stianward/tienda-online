@@ -127,9 +127,9 @@ export default function CheckoutBillingPage() {
 
       const prefData = await prefResponse.json();
 
-      if (prefData.sandbox_init_point || prefData.init_point) {
-        // Redirección directa al Checkout Pro oficial de Mercado Pago (Sandbox con credenciales de prueba)
-        const checkoutUrl = prefData.sandbox_init_point || prefData.init_point;
+      if (prefData.checkout_url || prefData.init_point || prefData.sandbox_init_point) {
+        // Redirección directa al Checkout Pro oficial de Mercado Pago
+        const checkoutUrl = prefData.checkout_url || prefData.init_point || prefData.sandbox_init_point;
         window.location.href = checkoutUrl;
       } else {
         // Fallback local en caso de error de red

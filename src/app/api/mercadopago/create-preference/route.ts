@@ -50,10 +50,14 @@ export async function POST(request: Request) {
 
       console.log(`[Mercado Pago] Preference created: ${response.id}`);
 
+      const isProduction = process.env.NEXT_PUBLIC_MERCADOPAGO_ENV === "production" || process.env.NODE_ENV === "production";
+      const checkoutUrl = isProduction ? (response.init_point || response.sandbox_init_point) : (response.sandbox_init_point || response.init_point);
+
       return NextResponse.json({
         id: response.id,
         init_point: response.init_point,
         sandbox_init_point: response.sandbox_init_point,
+        checkout_url: checkoutUrl,
       });
     } catch (sdkError: any) {
       console.error("[Mercado Pago SDK Error]:", sdkError?.message || sdkError);
