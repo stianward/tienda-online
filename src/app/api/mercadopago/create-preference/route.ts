@@ -7,18 +7,17 @@ export async function POST(request: Request) {
     const { title, description, quantity, unit_price, orderId, payer } = body;
 
     const forwardedHost = request.headers.get("x-forwarded-host");
-    const forwardedProto = request.headers.get("x-forwarded-proto");
-    const hostHeader = request.headers.get("host") || "localhost:3000";
+    const hostHeader = request.headers.get("host");
+    const activeHost = forwardedHost || hostHeader;
 
-    const customAppUrl = process.env.NEXT_PUBLIC_APP_URL;
     let baseUrl: string;
-
-    if (customAppUrl && !customAppUrl.includes("localhost")) {
-      baseUrl = customAppUrl.replace(/\/$/, "");
+    if (activeHost && !activeHost.includes("localhost")) {
+      const forwardedProto = request.headers.get("x-forwarded-proto") || "https";
+      baseUrl = `${forwardedProto}://${activeHost}`;
+    } else if (process.env.NEXT_PUBLIC_APP_URL && !process.env.NEXT_PUBLIC_APP_URL.includes("localhost")) {
+      baseUrl = process.env.NEXT_PUBLIC_APP_URL.replace(/\/$/, "");
     } else {
-      const activeHost = forwardedHost || hostHeader;
-      const protocol = forwardedProto || (activeHost.includes("localhost") ? "http" : "https");
-      baseUrl = `${protocol}://${activeHost}`;
+      baseUrl = "https://tienda-online-371992299473.us-east4.run.app";
     }
 
     // Si es https permite auto_return; si es localhost, Mercado Pago rechaza auto_return

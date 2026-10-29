@@ -18,7 +18,7 @@ env:
   - variable: MERCADOPAGO_CLIENT_SECRET
     value: 9t1FUmTE4Pw0RSwOVMAH4vZf4pQ86vAs
   - variable: NEXT_PUBLIC_APP_URL
-    value: https://grabamil-1721f.web.app
+    value: https://tienda-online-371992299473.us-east4.run.app
   - variable: NEXT_PUBLIC_FIREBASE_API_KEY
     value: AIzaSyDx5g82pgaJjXlc9p_jZpbAXcWudRgfokQ
   - variable: NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN
