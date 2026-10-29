@@ -113,7 +113,27 @@ export async function persistDatabaseToFirestore(state: DatabaseState): Promise<
       }
     }
 
-    console.log("[Firestore Sync] Datos y formularios persistidos exitosamente en Cloud Firestore");
+    // 5. Persistir productos en la colección 'products'
+    if (cleanState.products && cleanState.products.length > 0) {
+      for (const prod of cleanState.products) {
+        if (prod.id) {
+          const prodDoc = doc(db, "products", prod.id);
+          setDoc(prodDoc, prod, { merge: true }).catch(() => {});
+        }
+      }
+    }
+
+    // 6. Persistir categorías en la colección 'categories'
+    if (cleanState.categories && cleanState.categories.length > 0) {
+      for (const cat of cleanState.categories) {
+        if (cat.id) {
+          const catDoc = doc(db, "categories", cat.id);
+          setDoc(catDoc, cat, { merge: true }).catch(() => {});
+        }
+      }
+    }
+
+    console.log("[Firestore Sync] Datos, productos y formularios persistidos exitosamente en Cloud Firestore");
   } catch (error: any) {
     if (error.code === "not-found" || error.message?.includes("NOT_FOUND")) {
       console.warn("[Firestore Sync] Base de datos no encontrada. Debes crear la base de datos Firestore en Firebase Console.");
