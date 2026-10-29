@@ -147,11 +147,17 @@ export default function ShopHomePage() {
                 className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden flex flex-col justify-between hover:shadow-xl transition group"
               >
                 <div>
-                  <div className="relative h-52 bg-slate-100 overflow-hidden">
+                  <div className="relative h-52 bg-slate-900/10 overflow-hidden flex items-center justify-center">
+                    <img
+                      src={product.imageUrl}
+                      alt=""
+                      aria-hidden="true"
+                      className="absolute inset-0 w-full h-full object-cover blur-xl scale-125 opacity-50 pointer-events-none"
+                    />
                     <img
                       src={product.imageUrl}
                       alt={product.name}
-                      className="w-full h-full object-cover group-hover:scale-105 transition duration-300"
+                      className="relative z-10 max-h-full max-w-full object-contain p-2 group-hover:scale-105 transition duration-300 drop-shadow-xs"
                       onError={(e) => {
                         (e.target as any).src =
                           "https://images.unsplash.com/photo-1605100804763-247f67b3557e?auto=format&fit=crop&w=800&q=80";

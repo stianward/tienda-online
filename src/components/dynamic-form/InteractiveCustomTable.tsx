@@ -2,7 +2,7 @@
 
 import React, { useState } from "react";
 import { CustomTable, Render3D } from "@/types";
-import { Plus, Trash2, Box, Eye, Sparkles, X, RotateCcw } from "lucide-react";
+import { Plus, Trash2, Box, Eye, Sparkles, X, RotateCcw, Check, Layers } from "lucide-react";
 import Secure3DRenderViewer from "@/components/renders/Secure3DRenderViewer";
 
 interface InteractiveCustomTableProps {
@@ -36,6 +36,59 @@ export default function InteractiveCustomTable({
   // Se abre en una ventana modal cuando el usuario hace clic en "Visualizar en 3D"
   const [is3DModalOpen, setIs3DModalOpen] = useState<boolean>(false);
   const [selectedRowIndex, setSelectedRowIndex] = useState<number>(0);
+
+  // Modal de Creación / Edición Vertical de Fila
+  const [isRowModalOpen, setIsRowModalOpen] = useState<boolean>(false);
+  const [modalMode, setModalMode] = useState<"create" | "edit">("create");
+  const [editingRowIndex, setEditingRowIndex] = useState<number | null>(null);
+  const [modalFormData, setModalFormData] = useState<Record<string, string | number>>({});
+
+  const handleOpenCreateModal = () => {
+    const defaultRow: Record<string, string | number> = {};
+    tableConfig.columns.forEach((col) => {
+      defaultRow[col.id] =
+        col.type === "number" ? 1 : col.type === "select" ? (col.options?.[0] || "") : "";
+    });
+    setModalFormData(defaultRow);
+    setModalMode("create");
+    setEditingRowIndex(null);
+    setIsRowModalOpen(true);
+  };
+
+  const handleOpenEditModal = (index: number) => {
+    setModalFormData({ ...rows[index] });
+    setModalMode("edit");
+    setEditingRowIndex(index);
+    setSelectedRowIndex(index);
+    setIsRowModalOpen(true);
+  };
+
+  const handleModalFieldChange = (columnId: string, val: string | number) => {
+    setModalFormData((prev) => ({
+      ...prev,
+      [columnId]: val,
+    }));
+  };
+
+  const handleSaveModalRow = () => {
+    if (modalMode === "create") {
+      const updated = [...rows, modalFormData];
+      updateRows(updated);
+      setSelectedRowIndex(updated.length - 1);
+    } else if (modalMode === "edit" && editingRowIndex !== null) {
+      const updated = [...rows];
+      updated[editingRowIndex] = modalFormData;
+      updateRows(updated);
+    }
+    setIsRowModalOpen(false);
+  };
+
+  const handleDeleteFromModal = () => {
+    if (editingRowIndex !== null && rows.length > 1) {
+      handleRemoveRow(editingRowIndex);
+      setIsRowModalOpen(false);
+    }
+  };
 
   const updateRows = (newRows: Record<string, string | number>[]) => {
     setRows(newRows);
@@ -127,7 +180,7 @@ export default function InteractiveCustomTable({
                   <th className="py-2.5 px-2 text-xs font-semibold text-center w-24">Visor 3D</th>
                 )}
                 {!readOnly && (
-                  <th className="py-2.5 px-2 text-xs font-semibold text-center w-14">Acción</th>
+                  <th className="py-2.5 px-2 text-xs font-semibold text-center w-28">Acción</th>
                 )}
               </tr>
             </thead>
@@ -205,22 +258,38 @@ export default function InteractiveCustomTable({
 
                     {!readOnly && (
                       <td className="py-2 px-2 text-center">
-                        <button
-                          type="button"
-                          disabled={rows.length <= 1}
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            handleRemoveRow(rIdx);
-                          }}
-                          className={`p-2.5 rounded-lg transition min-w-[44px] min-h-[44px] flex items-center justify-center cursor-pointer ${
-                            rows.length <= 1
-                              ? "text-slate-300 cursor-not-allowed"
-                              : "text-rose-500 hover:bg-rose-50 hover:text-rose-700"
-                          }`}
-                          title="Eliminar fila (reduce 1 unidad del pedido)"
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </button>
+                        <div className="flex items-center justify-center gap-1.5">
+                          {/* Botón Ver / Editar en Modal Vertical */}
+                          <button
+                            type="button"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleOpenEditModal(rIdx);
+                            }}
+                            className="p-2 rounded-lg text-indigo-600 bg-indigo-50 hover:bg-indigo-100 hover:text-indigo-800 transition min-w-[36px] min-h-[36px] flex items-center justify-center cursor-pointer shadow-2xs"
+                            title="Ver y editar detalles en ventana modal"
+                          >
+                            <Eye className="w-4 h-4" />
+                          </button>
+
+                          {/* Botón Borrar fila */}
+                          <button
+                            type="button"
+                            disabled={rows.length <= 1}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleRemoveRow(rIdx);
+                            }}
+                            className={`p-2 rounded-lg transition min-w-[36px] min-h-[36px] flex items-center justify-center cursor-pointer ${
+                              rows.length <= 1
+                                ? "text-slate-300 cursor-not-allowed"
+                                : "text-rose-500 hover:bg-rose-50 hover:text-rose-700"
+                            }`}
+                            title="Eliminar fila (reduce 1 unidad del pedido)"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </button>
+                        </div>
                       </td>
                     )}
                   </tr>
@@ -234,7 +303,7 @@ export default function InteractiveCustomTable({
           <div className="flex flex-col sm:flex-row justify-between items-stretch sm:items-center gap-2.5 pt-1">
             <button
               type="button"
-              onClick={handleAddRow}
+              onClick={handleOpenCreateModal}
               className="inline-flex items-center justify-center gap-2 text-xs font-bold text-indigo-700 hover:text-indigo-900 bg-indigo-50 hover:bg-indigo-100 px-4 py-3 rounded-xl border border-indigo-200 transition shadow-xs cursor-pointer w-full sm:w-auto min-h-[44px]"
             >
               <Plus className="w-4 h-4" />
@@ -246,6 +315,138 @@ export default function InteractiveCustomTable({
           </div>
         )}
       </div>
+
+      {/* ======================================================== */}
+      {/* MODAL VERTICAL PARA AGREGAR / EDITAR PIEZA / FILA */}
+      {/* ======================================================== */}
+      {isRowModalOpen && (
+        <div className="fixed inset-0 z-50 bg-black/70 backdrop-blur-xs flex items-center justify-center p-3 sm:p-4 animate-in fade-in duration-200">
+          <div className="bg-white rounded-3xl border border-slate-200 shadow-2xl max-w-lg w-full overflow-hidden flex flex-col max-h-[92vh]">
+            {/* Header del Modal */}
+            <div className="flex items-center justify-between px-6 py-4 bg-slate-50 border-b border-slate-200">
+              <div className="flex items-center gap-3">
+                <div className="p-2 rounded-xl bg-indigo-50 text-indigo-600">
+                  {modalMode === "create" ? <Plus className="w-5 h-5" /> : <Layers className="w-5 h-5" />}
+                </div>
+                <div>
+                  <h3 className="text-sm font-bold text-slate-900">
+                    {modalMode === "create"
+                      ? "Agregar Nueva Pieza / Fila"
+                      : `Detalle de la Pieza #${(editingRowIndex ?? 0) + 1}`}
+                  </h3>
+                  <p className="text-[11px] text-slate-500">
+                    {tableConfig.name} • Formato Vertical
+                  </p>
+                </div>
+              </div>
+
+              <button
+                type="button"
+                onClick={() => setIsRowModalOpen(false)}
+                className="text-slate-400 hover:text-slate-700 p-2 rounded-xl transition cursor-pointer"
+                title="Cerrar modal"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            {/* Formulario en Formato Vertical */}
+            <div className="p-6 space-y-4 flex-1 overflow-y-auto">
+              {tableConfig.columns.map((col) => (
+                <div key={col.id} className="space-y-1.5">
+                  <label className="block text-xs font-semibold text-slate-700">
+                    {col.header}
+                  </label>
+                  {col.type === "select" && col.options ? (
+                    <select
+                      value={String(modalFormData[col.id] || "")}
+                      onChange={(e) => handleModalFieldChange(col.id, e.target.value)}
+                      className="w-full text-sm font-medium bg-white border border-slate-300 rounded-xl py-2.5 px-3 focus:ring-2 focus:ring-indigo-500 focus:outline-none text-slate-800"
+                    >
+                      {col.options.map((opt) => (
+                        <option key={opt} value={opt}>
+                          {opt}
+                        </option>
+                      ))}
+                    </select>
+                  ) : (
+                    <input
+                      type={col.type === "number" ? "number" : "text"}
+                      value={modalFormData[col.id] ?? ""}
+                      onChange={(e) =>
+                        handleModalFieldChange(
+                          col.id,
+                          col.type === "number" ? parseFloat(e.target.value) || 0 : e.target.value
+                        )
+                      }
+                      placeholder={`Ingresa ${col.header.toLowerCase()}`}
+                      className="w-full text-sm bg-white border border-slate-300 rounded-xl py-2.5 px-3 focus:ring-2 focus:ring-indigo-500 focus:outline-none font-medium text-slate-800"
+                    />
+                  )}
+                </div>
+              ))}
+            </div>
+
+            {/* Footer con Botones */}
+            <div className="px-6 py-4 bg-slate-50 border-t border-slate-200 flex items-center justify-between gap-3">
+              {modalMode === "edit" ? (
+                <>
+                  <button
+                    type="button"
+                    disabled={rows.length <= 1}
+                    onClick={handleDeleteFromModal}
+                    className={`inline-flex items-center gap-1.5 px-4 py-2.5 rounded-xl text-xs font-bold transition cursor-pointer ${
+                      rows.length <= 1
+                        ? "text-slate-300 bg-slate-100 cursor-not-allowed"
+                        : "text-rose-600 bg-rose-50 hover:bg-rose-100 border border-rose-200"
+                    }`}
+                    title="Eliminar esta pieza del pedido"
+                  >
+                    <Trash2 className="w-4 h-4" />
+                    <span>Eliminar Pieza</span>
+                  </button>
+
+                  <div className="flex items-center gap-2">
+                    <button
+                      type="button"
+                      onClick={() => setIsRowModalOpen(false)}
+                      className="px-4 py-2.5 rounded-xl border border-slate-300 text-slate-600 hover:bg-slate-100 text-xs font-semibold transition cursor-pointer"
+                    >
+                      Cerrar
+                    </button>
+                    <button
+                      type="button"
+                      onClick={handleSaveModalRow}
+                      className="inline-flex items-center gap-1.5 px-5 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-xs font-bold shadow-md shadow-indigo-600/20 transition cursor-pointer"
+                    >
+                      <Check className="w-4 h-4" />
+                      <span>Guardar Cambios</span>
+                    </button>
+                  </div>
+                </>
+              ) : (
+                <>
+                  <button
+                    type="button"
+                    onClick={() => setIsRowModalOpen(false)}
+                    className="px-4 py-2.5 rounded-xl border border-slate-300 text-slate-600 hover:bg-slate-100 text-xs font-semibold transition cursor-pointer"
+                  >
+                    Cancelar
+                  </button>
+                  <button
+                    type="button"
+                    onClick={handleSaveModalRow}
+                    className="inline-flex items-center gap-1.5 px-5 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-xs font-bold shadow-md shadow-indigo-600/20 transition cursor-pointer"
+                  >
+                    <Plus className="w-4 h-4" />
+                    <span>Agregar Pieza (+1 unidad)</span>
+                  </button>
+                </>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* ======================================================== */}
       {/* MODAL DE PREVISUALIZACIÓN 3D (Requerimiento explícito) */}

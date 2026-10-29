@@ -126,13 +126,25 @@ function ProductDetailContent() {
           {/* Columna Izquierda: Información del Producto & Valor Total Dinámico */}
           <div className="lg:col-span-5 space-y-6">
             <div className="bg-white rounded-3xl border border-slate-200 overflow-hidden shadow-sm p-4">
-              <div className="relative h-80 rounded-2xl overflow-hidden bg-slate-100">
+              <div className="relative h-80 sm:h-96 rounded-2xl overflow-hidden bg-slate-900/10 flex items-center justify-center">
+                {/* Imagen de fondo desenfocada para rellenar los bordes con efecto blur */}
+                <img
+                  src={product.imageUrl}
+                  alt=""
+                  aria-hidden="true"
+                  className="absolute inset-0 w-full h-full object-cover blur-2xl scale-125 opacity-60 pointer-events-none"
+                />
+                {/* Imagen principal que se muestra completa sin recortes */}
                 <img
                   src={product.imageUrl}
                   alt={product.name}
-                  className="w-full h-full object-cover"
+                  className="relative z-10 max-h-full max-w-full object-contain p-2 drop-shadow-md transition-transform duration-300 hover:scale-105"
+                  onError={(e) => {
+                    (e.target as any).src =
+                      "https://images.unsplash.com/photo-1605100804763-247f67b3557e?auto=format&fit=crop&w=800&q=80";
+                  }}
                 />
-                <div className="absolute top-3 right-3 bg-white/90 backdrop-blur px-3 py-1 rounded-full text-xs font-bold text-slate-800 shadow-xs">
+                <div className="absolute top-3 right-3 z-20 bg-white/90 backdrop-blur px-3 py-1 rounded-full text-xs font-bold text-slate-800 shadow-xs">
                   Stock: {product.stock} disponibles
                 </div>
               </div>
