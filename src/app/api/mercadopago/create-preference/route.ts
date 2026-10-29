@@ -23,27 +23,63 @@ export async function POST(request: Request) {
     // Si es https permite auto_return; si es localhost, Mercado Pago rechaza auto_return
     const isHttps = baseUrl.startsWith("https://");
 
+    // 1. Separar nombre y apellido requeridos por el estándar de Mercado Pago
+    let firstName = "Cliente";
+    let lastName = "Comprador";
+    if (payer?.name) {
+      const parts = String(payer.name).trim().split(/\s+/);
+      firstName = parts[0] || "Cliente";
+      lastName = parts.slice(1).join(" ") || "Comprador";
+    }
+
+    // 2. Extraer y formatear teléfono con código de área para Colombia (+57)
+    const cleanDigits = payer?.phone ? String(payer.phone).replace(/\D/g, "") : "";
+    const phoneObj =
+      cleanDigits.length >= 7
+        ? {
+            area_code: "57",
+            number: cleanDigits.slice(-10),
+          }
+        : undefined;
+
+    // 3. Formatear dirección según estándar de Checkout Pro
+    const addressObj = payer?.address
+      ? {
+          street_name: String(payer.address).trim().substring(0, 100) || "Dirección de Despacho",
+        }
+      : undefined;
+
+    // 4. Validar correo electrónico
+    const validEmail =
+      payer?.email && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(String(payer.email).trim())
+        ? String(payer.email).trim()
+        : "cliente@grabamil.com";
+
+    // 5. Normalizar precio unitario y cantidad (COP en enteros)
+    const normalizedUnitPrice = Math.max(1000, Math.round(Number(unit_price) || 10000));
+    const normalizedQuantity = Math.max(1, Math.round(Number(quantity) || 1));
+
     try {
       const response = await mpPreference.create({
         body: {
           items: [
             {
               id: String(orderId || "item-1"),
-              title: String(title || "Producto Personalizado GrabaMil"),
-              description: String(description || "Grabado y personalización de alta precisión GrabaMil"),
-              quantity: Math.max(1, Number(quantity) || 1),
-              unit_price: Math.max(1, Number(unit_price) || 10000),
+              title: String(title || "Producto Personalizado GrabaMil").substring(0, 120),
+              description: String(description || "Grabado y personalización de alta precisión GrabaMil").substring(0, 250),
+              quantity: normalizedQuantity,
+              unit_price: normalizedUnitPrice,
               currency_id: "COP",
+              category_id: "art",
             },
           ],
-          payer: payer
-            ? {
-                name: payer.name || "Cliente",
-                email: payer.email || "cliente@ejemplo.com",
-                phone: payer.phone ? { number: String(payer.phone) } : undefined,
-                address: payer.address ? { street_name: String(payer.address) } : undefined,
-              }
-            : undefined,
+          payer: {
+            name: firstName,
+            surname: lastName,
+            email: validEmail,
+            phone: phoneObj,
+            address: addressObj,
+          },
           back_urls: {
             success: `${baseUrl}/transaction-result?order_id=${orderId}&status=approved`,
             pending: `${baseUrl}/transaction-result?order_id=${orderId}&status=pending`,

@@ -76,8 +76,8 @@ function TransactionResultContent() {
       mpStatus === "approved"
         ? "approved"
         : mpStatus === "pending" || mpStatus === "in_process"
-        ? "pending"
-        : "rejected";
+          ? "pending"
+          : "rejected";
 
     if (normalizedStatus === "approved") {
       targetStatus = db.orderStatuses.find((s) => s.isDefaultInitial);
@@ -94,10 +94,10 @@ function TransactionResultContent() {
       realPaymentId && realPaymentId !== "null"
         ? realPaymentId
         : targetOrder.mercadoPagoPaymentId && targetOrder.mercadoPagoPaymentId !== "null"
-        ? targetOrder.mercadoPagoPaymentId
-        : normalizedStatus === "approved"
-        ? `MP-${Math.floor(1000000000 + Math.random() * 9000000000)}`
-        : undefined;
+          ? targetOrder.mercadoPagoPaymentId
+          : normalizedStatus === "approved"
+            ? `MP-${Math.floor(1000000000 + Math.random() * 9000000000)}`
+            : undefined;
 
     const updatedOrder: Order = {
       ...targetOrder,
@@ -111,9 +111,8 @@ function TransactionResultContent() {
           statusId: targetStatus.id,
           statusName: targetStatus.name,
           timestamp,
-          note: `Respuesta API Mercado Pago: ${normalizedStatus.toUpperCase()}${
-            finalPaymentId ? ` (ID: ${finalPaymentId})` : " (Sin ID de transacción generado)"
-          }`,
+          note: `Respuesta API Mercado Pago: ${normalizedStatus.toUpperCase()}${finalPaymentId ? ` (ID: ${finalPaymentId})` : " (Sin ID de transacción generado)"
+            }`,
         },
       ],
     };
@@ -225,33 +224,30 @@ function TransactionResultContent() {
               <button
                 type="button"
                 onClick={() => order && applyMercadoPagoStatus(order, "approved")}
-                className={`px-3 py-1.5 rounded-lg text-xs font-bold transition ${
-                  currentStatus === "approved"
-                    ? "bg-emerald-600 text-white shadow-sm"
-                    : "bg-white text-emerald-800 border border-emerald-300 hover:bg-emerald-50"
-                }`}
+                className={`px-3 py-1.5 rounded-lg text-xs font-bold transition ${currentStatus === "approved"
+                  ? "bg-emerald-600 text-white shadow-sm"
+                  : "bg-white text-emerald-800 border border-emerald-300 hover:bg-emerald-50"
+                  }`}
               >
                 Simular Pago Exitoso (Orden recibida)
               </button>
               <button
                 type="button"
                 onClick={() => order && applyMercadoPagoStatus(order, "pending")}
-                className={`px-3 py-1.5 rounded-lg text-xs font-bold transition ${
-                  currentStatus === "pending"
-                    ? "bg-amber-600 text-white shadow-sm"
-                    : "bg-white text-amber-800 border border-amber-300 hover:bg-amber-50"
-                }`}
+                className={`px-3 py-1.5 rounded-lg text-xs font-bold transition ${currentStatus === "pending"
+                  ? "bg-amber-600 text-white shadow-sm"
+                  : "bg-white text-amber-800 border border-amber-300 hover:bg-amber-50"
+                  }`}
               >
                 Simular Pago Pendiente
               </button>
               <button
                 type="button"
                 onClick={() => order && applyMercadoPagoStatus(order, "rejected")}
-                className={`px-3 py-1.5 rounded-lg text-xs font-bold transition ${
-                  currentStatus === "rejected"
-                    ? "bg-rose-600 text-white shadow-sm"
-                    : "bg-white text-rose-800 border border-rose-300 hover:bg-rose-50"
-                }`}
+                className={`px-3 py-1.5 rounded-lg text-xs font-bold transition ${currentStatus === "rejected"
+                  ? "bg-rose-600 text-white shadow-sm"
+                  : "bg-white text-rose-800 border border-rose-300 hover:bg-rose-50"
+                  }`}
               >
                 Simular Rechazo (Cancelado)
               </button>
