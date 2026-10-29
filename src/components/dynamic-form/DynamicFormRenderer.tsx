@@ -3,7 +3,8 @@
 import React, { useState } from "react";
 import { CustomForm, CustomTable, Render3D } from "@/types";
 import InteractiveCustomTable from "./InteractiveCustomTable";
-import { X, Send, AlertCircle } from "lucide-react";
+import { X, Send, AlertCircle, Calendar, MapPin } from "lucide-react";
+import { COLOMBIA_REGIONS } from "@/lib/colombia-data";
 
 interface DynamicFormRendererProps {
   form: CustomForm;
@@ -163,6 +164,21 @@ export default function DynamicFormRenderer({
         ) {
           readableData.address = val;
         }
+
+        if (elem.type === "colombia_city") {
+          readableData.city = val;
+          readableData["Ciudad y Departamento"] = val;
+          if (!readableData.address) {
+            readableData.address = val;
+          } else if (!String(readableData.address).includes(String(val))) {
+            readableData.address = `${readableData.address}, ${val}`;
+          }
+        }
+
+        if (elem.type === "datepicker") {
+          readableData.date = val;
+          readableData[elem.label || "Fecha"] = val;
+        }
       }
     });
 
@@ -218,6 +234,64 @@ export default function DynamicFormRenderer({
                       : "border-slate-300 focus:border-indigo-500 focus:ring-indigo-100"
                   }`}
                 />
+                {errors[elem.id] && <p className="text-xs text-rose-500 font-medium">{errors[elem.id]}</p>}
+              </div>
+            );
+
+          case "datepicker":
+            return (
+              <div key={elem.id} className="space-y-1.5">
+                <label className="block text-xs font-semibold text-slate-700 flex items-center gap-1.5">
+                  <Calendar className="w-3.5 h-3.5 text-indigo-600" />
+                  <span>{elem.label}</span>
+                  {elem.required && <span className="text-rose-500 ml-1">*</span>}
+                </label>
+                <input
+                  type="date"
+                  placeholder={elem.placeholder || "AAAA-MM-DD"}
+                  value={formData[elem.id] ?? ""}
+                  onChange={(e) => handleInputChange(elem.id, e.target.value)}
+                  className={`w-full px-3.5 py-2.5 text-base sm:text-sm rounded-lg border bg-white focus:outline-none focus:ring-2 transition text-slate-800 ${
+                    errors[elem.id]
+                      ? "border-rose-300 ring-rose-200 focus:ring-rose-400"
+                      : "border-slate-300 focus:border-indigo-500 focus:ring-indigo-100"
+                  }`}
+                />
+                {errors[elem.id] && <p className="text-xs text-rose-500 font-medium">{errors[elem.id]}</p>}
+              </div>
+            );
+
+          case "colombia_city":
+            return (
+              <div key={elem.id} className="space-y-1.5">
+                <label className="block text-xs font-semibold text-slate-700 flex items-center gap-1.5">
+                  <MapPin className="w-3.5 h-3.5 text-emerald-600" />
+                  <span>{elem.label}</span>
+                  {elem.required && <span className="text-rose-500 ml-1">*</span>}
+                </label>
+                <select
+                  value={formData[elem.id] ?? ""}
+                  onChange={(e) => handleInputChange(elem.id, e.target.value)}
+                  className={`w-full px-3.5 py-2.5 text-base sm:text-sm rounded-lg border bg-white focus:outline-none focus:ring-2 transition text-slate-800 font-medium ${
+                    errors[elem.id]
+                      ? "border-rose-300 ring-rose-200 focus:ring-rose-400"
+                      : "border-slate-300 focus:border-indigo-500 focus:ring-indigo-100"
+                  }`}
+                >
+                  <option value="">{elem.placeholder || "-- Seleccione Ciudad / Municipio y Departamento --"}</option>
+                  {Object.entries(COLOMBIA_REGIONS).map(([dept, cities]) => (
+                    <optgroup key={dept} label={`📍 ${dept}`}>
+                      {cities.map((city) => {
+                        const fullVal = city === dept ? city : `${city}, ${dept}`;
+                        return (
+                          <option key={fullVal} value={fullVal}>
+                            {city} ({dept})
+                          </option>
+                        );
+                      })}
+                    </optgroup>
+                  ))}
+                </select>
                 {errors[elem.id] && <p className="text-xs text-rose-500 font-medium">{errors[elem.id]}</p>}
               </div>
             );

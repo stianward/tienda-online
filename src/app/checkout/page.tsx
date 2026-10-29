@@ -60,7 +60,9 @@ export default function CheckoutBillingPage() {
       // Función validadora estricta: un formulario de facturación DEBE tener campos de entrada
       const hasInputFields = (f: CustomForm): boolean =>
         Array.isArray(f.elements) &&
-        f.elements.some((e) => ["text", "email", "number", "address"].includes(e.type));
+        f.elements.some((e) =>
+          ["text", "email", "number", "address", "colombia_city", "datepicker"].includes(e.type)
+        );
 
       // 1. Prioridad: Buscar formulario estándar de cliente por ID
       const standardClientForm = db.customForms.find(

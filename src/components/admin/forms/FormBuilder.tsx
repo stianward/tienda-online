@@ -43,6 +43,7 @@ import {
   Eye,
   Check,
   Sparkles,
+  Calendar,
 } from "lucide-react";
 import DynamicFormRenderer from "@/components/dynamic-form/DynamicFormRenderer";
 
@@ -86,6 +87,10 @@ function SortableElementItem({
         return <Mail className="w-4 h-4 text-purple-500" />;
       case "address":
         return <MapPin className="w-4 h-4 text-emerald-500" />;
+      case "datepicker":
+        return <Calendar className="w-4 h-4 text-teal-600" />;
+      case "colombia_city":
+        return <MapPin className="w-4 h-4 text-emerald-600" />;
       case "label":
         return <Tag className="w-4 h-4 text-amber-500" />;
       case "select":
@@ -221,6 +226,8 @@ export default function FormBuilder({
     else if (type === "number") defaultLabel = "Cantidad / Número";
     else if (type === "email") defaultLabel = "Correo Electrónico";
     else if (type === "address") defaultLabel = "Dirección";
+    else if (type === "datepicker") defaultLabel = "Fecha de Entrega";
+    else if (type === "colombia_city") defaultLabel = "Ciudad y Departamento (Colombia)";
     else if (type === "label") defaultLabel = "Título / Encabezado";
     else if (type === "select") defaultLabel = "Selección Desplegable";
     else if (type === "radio") defaultLabel = "Opciones Radio";
@@ -498,6 +505,24 @@ export default function FormBuilder({
 
               <button
                 type="button"
+                onClick={() => handleAddElement("datepicker")}
+                className="w-full flex items-center gap-2.5 p-2 rounded-lg text-xs font-semibold text-slate-700 hover:bg-slate-100 transition border border-transparent hover:border-slate-200 text-left"
+              >
+                <Calendar className="w-4 h-4 text-teal-600" />
+                <span>Datepicker (Fecha)</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => handleAddElement("colombia_city")}
+                className="w-full flex items-center gap-2.5 p-2 rounded-lg text-xs font-semibold text-slate-700 hover:bg-slate-100 transition border border-transparent hover:border-slate-200 text-left"
+              >
+                <MapPin className="w-4 h-4 text-emerald-600" />
+                <span>Select Ciudades Colombia (32 Dptos)</span>
+              </button>
+
+              <button
+                type="button"
                 onClick={() => handleAddElement("label")}
                 className="w-full flex items-center gap-2.5 p-2 rounded-lg text-xs font-semibold text-slate-700 hover:bg-slate-100 transition border border-transparent hover:border-slate-200 text-left"
               >
@@ -653,6 +678,31 @@ export default function FormBuilder({
                     />
                     <span>Campo Obligatorio</span>
                   </label>
+                )}
+
+                {/* Notas informativas según el tipo de control */}
+                {selectedElement.type === "colombia_city" && (
+                  <div className="p-3 bg-emerald-50 border border-emerald-200 rounded-xl text-xs text-emerald-900 space-y-1">
+                    <p className="font-bold flex items-center gap-1.5">
+                      <MapPin className="w-4 h-4 text-emerald-600" />
+                      <span>Catálogo Nacional de Colombia Activo</span>
+                    </p>
+                    <p className="text-[11px] text-emerald-700 leading-relaxed">
+                      Importa y agrupa automáticamente los 32 departamentos y municipios principales de Colombia en un selector desplegable estandarizado para facturación y despacho.
+                    </p>
+                  </div>
+                )}
+
+                {selectedElement.type === "datepicker" && (
+                  <div className="p-3 bg-teal-50 border border-teal-200 rounded-xl text-xs text-teal-900 space-y-1">
+                    <p className="font-bold flex items-center gap-1.5">
+                      <Calendar className="w-4 h-4 text-teal-600" />
+                      <span>Selector de Fecha HTML5 (Datepicker)</span>
+                    </p>
+                    <p className="text-[11px] text-teal-700 leading-relaxed">
+                      Despliega un calendario interactivo nativo con formato estándar AAAA-MM-DD, optimizado para selección de fechas de entrega o fabricación.
+                    </p>
+                  </div>
                 )}
 
                 {/* Si es select o radio, gestionar opciones */}

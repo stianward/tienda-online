@@ -96,6 +96,8 @@ export type FormElementType =
   | "number"
   | "email"
   | "address"
+  | "datepicker"
+  | "colombia_city"
   | "label"
   | "select"
   | "radio"
