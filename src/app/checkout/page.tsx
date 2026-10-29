@@ -54,25 +54,66 @@ export default function CheckoutBillingPage() {
       }
     }
 
-    const db = getDatabase();
-    // Buscar formulario de tipo CLIENTE para facturación con búsqueda por varios criterios
-    const clientType = db.formTypes.find(
-      (ft) => ft.name.toUpperCase() === "CLIENTE" || ft.id === "ft-cliente"
-    );
-    const foundForm =
-      db.customForms.find((f) => clientType && f.formTypeId === clientType.id) ||
-      db.customForms.find(
-        (f) =>
-          f.id === "form-cliente-basico" ||
-          f.name.toLowerCase().includes("factura") ||
-          f.name.toLowerCase().includes("cliente") ||
-          f.name.toLowerCase().includes("envío") ||
-          f.name.toLowerCase().includes("despacho")
-      ) ||
-      db.customForms.find((f) => f.elements && f.elements.some((e) => e.type === "email" || e.type === "address")) ||
-      GUARANTEED_CLIENT_FORM;
+    const resolveBillingForm = (): CustomForm => {
+      const db = getDatabase();
 
-    setClientForm(foundForm);
+      // Función validadora estricta: un formulario de facturación DEBE tener campos de entrada
+      const hasInputFields = (f: CustomForm): boolean =>
+        Array.isArray(f.elements) &&
+        f.elements.some((e) => ["text", "email", "number", "address"].includes(e.type));
+
+      // 1. Prioridad: Buscar formulario estándar de cliente por ID
+      const standardClientForm = db.customForms.find(
+        (f) => f.id === "form-cliente-basico" && hasInputFields(f)
+      );
+      if (standardClientForm) return standardClientForm;
+
+      // 2. Buscar formulario asociado al tipo de formulario 'CLIENTE'
+      const clientType = db.formTypes.find(
+        (ft) => ft.name.toUpperCase() === "CLIENTE" || ft.id === "ft-cliente"
+      );
+      if (clientType) {
+        const formByType = db.customForms.find(
+          (f) => f.formTypeId === clientType.id && hasInputFields(f)
+        );
+        if (formByType) return formByType;
+      }
+
+      // 3. Buscar cualquier formulario con campos semánticos de facturación (email o address)
+      const formByFields = db.customForms.find(
+        (f) =>
+          hasInputFields(f) &&
+          f.elements.some((e) => e.type === "email" || e.type === "address")
+      );
+      if (formByFields) return formByFields;
+
+      // 4. Buscar por coincidencia de nombre (cliente / factura / despacho)
+      const formByName = db.customForms.find(
+        (f) =>
+          hasInputFields(f) &&
+          (f.name.toLowerCase().includes("cliente") ||
+            f.name.toLowerCase().includes("factura") ||
+            f.name.toLowerCase().includes("envío") ||
+            f.name.toLowerCase().includes("despacho"))
+      );
+      if (formByName) return formByName;
+
+      // 5. Fallback definitivo garantizado
+      return GUARANTEED_CLIENT_FORM;
+    };
+
+    const chosenForm = resolveBillingForm();
+    setClientForm(chosenForm);
+
+    // Asegurar que el formulario garantizado exista en la base de datos local y remota
+    const currentDb = getDatabase();
+    if (!currentDb.customForms.some((f) => f.id === "form-cliente-basico")) {
+      const updatedDb = {
+        ...currentDb,
+        customForms: [GUARANTEED_CLIENT_FORM, ...currentDb.customForms],
+      };
+      saveDatabase(updatedDb);
+    }
   }, [router]);
 
   if (!draftOrder || !clientForm) {
