@@ -36,10 +36,24 @@ export default function CheckoutBillingPage() {
     }
 
     const db = getDatabase();
-    // Buscar formulario de tipo CLIENTE para facturación
-    const clientType = db.formTypes.find((ft) => ft.name === "CLIENTE");
-    const foundForm = db.customForms.find((f) => f.formTypeId === clientType?.id);
-    setClientForm(foundForm || db.customForms[0]);
+    // Buscar formulario de tipo CLIENTE para facturación con búsqueda por varios criterios
+    const clientType = db.formTypes.find(
+      (ft) => ft.name.toUpperCase() === "CLIENTE" || ft.id === "ft-cliente"
+    );
+    const foundForm =
+      db.customForms.find((f) => clientType && f.formTypeId === clientType.id) ||
+      db.customForms.find(
+        (f) =>
+          f.id === "form-cliente-basico" ||
+          f.name.toLowerCase().includes("factura") ||
+          f.name.toLowerCase().includes("cliente") ||
+          f.name.toLowerCase().includes("envío") ||
+          f.name.toLowerCase().includes("despacho")
+      ) ||
+      db.customForms.find((f) => f.elements.some((e) => e.type === "email" || e.type === "address")) ||
+      db.customForms[0];
+
+    setClientForm(foundForm);
   }, [router]);
 
   if (!draftOrder || !clientForm) {
@@ -50,6 +64,51 @@ export default function CheckoutBillingPage() {
     );
   }
 
+  // Función extractora insensible a mayúsculas, tildes y variaciones de nombres de campo
+  const extractCustomerField = (
+    data: Record<string, any>,
+    patterns: RegExp[],
+    fallback = ""
+  ): string => {
+    // 1. Buscar en las llaves del objeto
+    for (const [key, val] of Object.entries(data)) {
+      if (val !== undefined && val !== null && String(val).trim() !== "") {
+        const cleanKey = key
+          .trim()
+          .toLowerCase()
+          .normalize("NFD")
+          .replace(/[\u0300-\u036f]/g, "");
+
+        if (patterns.some((pattern) => pattern.test(cleanKey))) {
+          return String(val).trim();
+        }
+      }
+    }
+
+    // 2. Si es email, buscar valores que tengan formato de correo
+    if (patterns.some((p) => p.test("email") || p.test("correo"))) {
+      for (const val of Object.values(data)) {
+        if (typeof val === "string" && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(val.trim())) {
+          return val.trim();
+        }
+      }
+    }
+
+    // 3. Si es teléfono, buscar valores numéricos que parezcan teléfono
+    if (patterns.some((p) => p.test("tel") || p.test("celular") || p.test("phone"))) {
+      for (const val of Object.values(data)) {
+        if (typeof val === "string" || typeof val === "number") {
+          const digits = String(val).replace(/[\s\-\(\)]/g, "");
+          if (/^\+?\d{7,15}$/.test(digits)) {
+            return String(val).trim();
+          }
+        }
+      }
+    }
+
+    return fallback;
+  };
+
   // Enviar a Mercado Pago
   const handleProceedPayment = async (customerBillingData: Record<string, any>) => {
     setIsProcessing(true);
@@ -59,7 +118,48 @@ export default function CheckoutBillingPage() {
       const orderNumber = `GRB-${Math.floor(10000 + Math.random() * 90000)}`;
       const orderId = `ord-${Date.now().toString(36)}-${Math.random().toString(36).substring(2, 6)}`;
 
-      // 2. Crear orden en estado "Pendiente de pago" inicialmente
+      // 2. Extraer datos reales del cliente diligenciados en el formulario
+      const customerName =
+        customerBillingData.name ||
+        extractCustomerField(customerBillingData, [
+          /nombre/i,
+          /name/i,
+          /cliente/i,
+          /titular/i,
+          /destinatario/i,
+        ]) ||
+        "Cliente";
+
+      const customerEmail =
+        customerBillingData.email ||
+        extractCustomerField(customerBillingData, [/correo/i, /email/i, /mail/i]) ||
+        "cliente@grabamil.com";
+
+      const customerPhone =
+        customerBillingData.phone ||
+        extractCustomerField(customerBillingData, [
+          /tel/i,
+          /cel/i,
+          /whatsapp/i,
+          /phone/i,
+          /movil/i,
+        ]) ||
+        "";
+
+      const customerAddress =
+        customerBillingData.address ||
+        extractCustomerField(customerBillingData, [
+          /direcci/i,
+          /ciudad/i,
+          /address/i,
+          /domicilio/i,
+          /entrega/i,
+          /despacho/i,
+          /ubicaci/i,
+        ]) ||
+        "";
+
+      // 3. Crear orden en estado "Pendiente de pago" inicialmente
       const db = getDatabase();
       const pendingStatus =
         db.orderStatuses.find((s) => s.isPendingPayment) || db.orderStatuses[1];
@@ -73,15 +173,16 @@ export default function CheckoutBillingPage() {
         quantity: draftOrder.quantity,
         total: draftOrder.total,
         customerData: {
-          name: customerBillingData["Nombre Completo"] || customerBillingData.name || "Cliente GrabaMil",
-          email: customerBillingData["Correo Electrónico"] || customerBillingData.email || "cliente@ejemplo.com",
-          phone: customerBillingData["Teléfono / WhatsApp"] || customerBillingData.phone || "",
-          address: customerBillingData["Dirección de Entrega y Ciudad"] || customerBillingData.address || "",
           ...customerBillingData,
+          name: customerName,
+          email: customerEmail,
+          phone: customerPhone,
+          address: customerAddress,
         },
         customFormData: draftOrder.customFormData || {},
         tableData: draftOrder.tableData || [],
         statusId: pendingStatus.id,
+        mercadoPagoStatus: "pending",
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString(),
         statusHistory: [

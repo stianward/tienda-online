@@ -25,9 +25,20 @@ function TransactionResultContent() {
   const urlOrderId = searchParams.get("order_id") || searchParams.get("external_reference");
   const [effectiveOrderId, setEffectiveOrderId] = useState<string | null>(urlOrderId);
 
-  // Parámetros de estado devueltos por Mercado Pago
-  const rawMpStatus = searchParams.get("collection_status") || searchParams.get("status") || "approved";
-  const incomingPaymentId = searchParams.get("payment_id") || searchParams.get("collection_id");
+  const getCleanParam = (paramName: string): string | null => {
+    const val = searchParams.get(paramName);
+    if (!val || val === "null" || val === "undefined") return null;
+    return val;
+  };
+
+  // Parámetros de estado devueltos por Mercado Pago limpios de cadenas "null"
+  const rawMpStatus =
+    getCleanParam("status") ||
+    getCleanParam("collection_status") ||
+    "pending";
+  const incomingPaymentId =
+    getCleanParam("payment_id") ||
+    getCleanParam("collection_id");
 
   const [order, setOrder] = useState<Order | null>(null);
   const [currentStatus, setCurrentStatus] = useState<string>(rawMpStatus);
@@ -79,7 +90,14 @@ function TransactionResultContent() {
     if (!targetStatus) return;
 
     const timestamp = new Date().toISOString();
-    const finalPaymentId = realPaymentId || targetOrder.mercadoPagoPaymentId || `MP-${Math.floor(1000000000 + Math.random() * 9000000000)}`;
+    const finalPaymentId =
+      realPaymentId && realPaymentId !== "null"
+        ? realPaymentId
+        : targetOrder.mercadoPagoPaymentId && targetOrder.mercadoPagoPaymentId !== "null"
+        ? targetOrder.mercadoPagoPaymentId
+        : normalizedStatus === "approved"
+        ? `MP-${Math.floor(1000000000 + Math.random() * 9000000000)}`
+        : undefined;
 
     const updatedOrder: Order = {
       ...targetOrder,
@@ -93,7 +111,9 @@ function TransactionResultContent() {
           statusId: targetStatus.id,
           statusName: targetStatus.name,
           timestamp,
-          note: `Respuesta API Mercado Pago: ${normalizedStatus.toUpperCase()} (ID: ${finalPaymentId})`,
+          note: `Respuesta API Mercado Pago: ${normalizedStatus.toUpperCase()}${
+            finalPaymentId ? ` (ID: ${finalPaymentId})` : " (Sin ID de transacción generado)"
+          }`,
         },
       ],
     };

@@ -251,15 +251,37 @@ export default function OrdersAdminPage() {
                         </div>
                         <div>
                           <span className="text-slate-400 block text-[11px]">ID Transacción Mercado Pago:</span>
-                          <span className="font-mono text-emerald-700 font-bold bg-emerald-50 px-1.5 py-0.5 rounded">
-                            {order.mercadoPagoPaymentId || "MP-DIRECT"}
-                          </span>
+                          {order.mercadoPagoPaymentId && order.mercadoPagoPaymentId !== "null" ? (
+                            <span className="font-mono text-emerald-700 font-bold bg-emerald-50 px-1.5 py-0.5 rounded">
+                              {order.mercadoPagoPaymentId}
+                            </span>
+                          ) : (
+                            <span className="font-mono text-slate-500 font-medium bg-slate-100 px-1.5 py-0.5 rounded text-[11px]">
+                              {order.mercadoPagoStatus === "rejected"
+                                ? "Sin ID (Rechazado)"
+                                : "Pendiente de Pasarela"}
+                            </span>
+                          )}
                         </div>
                         <div>
                           <span className="text-slate-400 block text-[11px]">Estado de Pago Mercado Pago:</span>
-                          <span className="font-bold text-slate-800 capitalize">
-                            {order.mercadoPagoStatus || "Aprobado"}
-                          </span>
+                          {order.mercadoPagoStatus === "approved" ? (
+                            <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-bold bg-emerald-100 text-emerald-800">
+                              Aprobado
+                            </span>
+                          ) : order.mercadoPagoStatus === "rejected" ? (
+                            <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-bold bg-rose-100 text-rose-800">
+                              Rechazado
+                            </span>
+                          ) : order.mercadoPagoStatus === "pending" || order.mercadoPagoStatus === "in_process" ? (
+                            <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-bold bg-amber-100 text-amber-800">
+                              Pendiente
+                            </span>
+                          ) : (
+                            <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-bold bg-slate-100 text-slate-700">
+                              Sin procesar
+                            </span>
+                          )}
                         </div>
                       </div>
                     </div>

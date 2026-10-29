@@ -112,7 +112,57 @@ export default function DynamicFormRenderer({
     const readableData: Record<string, any> = {};
     form.elements.forEach((elem) => {
       if (!elem.type.startsWith("button_") && elem.type !== "label" && elem.type !== "custom_table") {
-        readableData[elem.label || elem.id] = formData[elem.id];
+        const val = formData[elem.id];
+        if (elem.label) {
+          readableData[elem.label] = val;
+        }
+        readableData[elem.id] = val;
+
+        // Inferencia semántica para asegurar mapeo de campos críticos independientemente del texto del label
+        const lowerLabel = (elem.label || "")
+          .toLowerCase()
+          .normalize("NFD")
+          .replace(/[\u0300-\u036f]/g, "");
+
+        if (
+          elem.type === "email" ||
+          lowerLabel.includes("correo") ||
+          lowerLabel.includes("email") ||
+          lowerLabel.includes("mail")
+        ) {
+          readableData.email = val;
+        }
+
+        if (
+          lowerLabel.includes("nombre") ||
+          lowerLabel.includes("name") ||
+          lowerLabel.includes("cliente") ||
+          lowerLabel.includes("titular")
+        ) {
+          readableData.name = val;
+        }
+
+        if (
+          lowerLabel.includes("tel") ||
+          lowerLabel.includes("cel") ||
+          lowerLabel.includes("whatsapp") ||
+          lowerLabel.includes("phone") ||
+          lowerLabel.includes("movil")
+        ) {
+          readableData.phone = val;
+        }
+
+        if (
+          elem.type === "address" ||
+          lowerLabel.includes("direcci") ||
+          lowerLabel.includes("ciudad") ||
+          lowerLabel.includes("address") ||
+          lowerLabel.includes("domicilio") ||
+          lowerLabel.includes("envio") ||
+          lowerLabel.includes("despacho")
+        ) {
+          readableData.address = val;
+        }
       }
     });
 
