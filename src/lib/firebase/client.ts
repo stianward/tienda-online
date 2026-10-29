@@ -13,17 +13,28 @@ const firebaseConfig = {
   measurementId: process.env.NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID || "G-LD4TNK31E7",
 };
 
-// Singleton initialization con soporte para ignorar propiedades undefined
+// Singleton initialization
 export const app = !getApps().length ? initializeApp(firebaseConfig) : getApp();
 export const auth = getAuth(app);
 
+// Conexión específica a la base de datos 'grabamil' (identificada en Firebase Console)
+const DATABASE_ID = process.env.NEXT_PUBLIC_FIREBASE_DATABASE_ID || "grabamil";
+
 let firestoreInstance;
 try {
-  firestoreInstance = initializeFirestore(app, {
-    ignoreUndefinedProperties: true,
-  });
+  firestoreInstance = initializeFirestore(
+    app,
+    {
+      ignoreUndefinedProperties: true,
+    },
+    DATABASE_ID
+  );
 } catch (e) {
-  firestoreInstance = getFirestore(app);
+  try {
+    firestoreInstance = getFirestore(app, DATABASE_ID);
+  } catch (err) {
+    firestoreInstance = getFirestore(app);
+  }
 }
 
 export const db = firestoreInstance;

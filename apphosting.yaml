@@ -25,6 +25,8 @@ env:
     value: grabamil-1721f.firebaseapp.com
   - variable: NEXT_PUBLIC_FIREBASE_PROJECT_ID
     value: grabamil-1721f
+  - variable: NEXT_PUBLIC_FIREBASE_DATABASE_ID
+    value: grabamil
   - variable: NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET
     value: grabamil-1721f.firebasestorage.app
   - variable: NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID
