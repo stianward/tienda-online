@@ -6,9 +6,20 @@ export async function POST(request: Request) {
     const body = await request.json();
     const { title, description, quantity, unit_price, orderId, payer } = body;
 
-    const host = request.headers.get("host") || "localhost:3000";
-    const protocol = host.includes("localhost") ? "http" : "https";
-    const baseUrl = `${protocol}://${host}`;
+    const forwardedHost = request.headers.get("x-forwarded-host");
+    const forwardedProto = request.headers.get("x-forwarded-proto");
+    const hostHeader = request.headers.get("host") || "localhost:3000";
+
+    const customAppUrl = process.env.NEXT_PUBLIC_APP_URL;
+    let baseUrl: string;
+
+    if (customAppUrl && !customAppUrl.includes("localhost")) {
+      baseUrl = customAppUrl.replace(/\/$/, "");
+    } else {
+      const activeHost = forwardedHost || hostHeader;
+      const protocol = forwardedProto || (activeHost.includes("localhost") ? "http" : "https");
+      baseUrl = `${protocol}://${activeHost}`;
+    }
 
     // Si es https permite auto_return; si es localhost, Mercado Pago rechaza auto_return
     const isHttps = baseUrl.startsWith("https://");
