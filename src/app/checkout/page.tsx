@@ -95,10 +95,18 @@ export default function CheckoutBillingPage() {
       };
 
       // Guardar en la base de datos
-      saveDatabase({
+      const nextDb = {
         ...db,
         orders: [newOrder, ...db.orders],
-      });
+      };
+      saveDatabase(nextDb);
+
+      try {
+        const { persistDatabaseToFirestore } = await import("@/lib/firebase/firestore-sync");
+        await persistDatabaseToFirestore(nextDb);
+      } catch (syncErr) {
+        console.warn("Sync error on checkout:", syncErr);
+      }
 
       // Guardar referencia activa
       if (typeof window !== "undefined") {
