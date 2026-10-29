@@ -419,14 +419,14 @@ export default function DynamicFormRenderer({
         </div>
       )}
 
-      {/* Si el formulario no tenía botones explícitos, agregar la botonera por defecto */}
+      {/* Si el formulario no tenía botones explícitos, agregar la botonera por defecto adaptable a móviles */}
       {(!hasCustomSubmit || !hasCustomCancel) && (
-        <div className="flex flex-wrap items-center gap-3 pt-4 border-t border-slate-200">
+        <div className="flex flex-col-reverse sm:flex-row items-stretch sm:items-center gap-3 pt-4 border-t border-slate-200">
           {!hasCustomCancel && (
             <button
               type="button"
               onClick={handleCancel}
-              className="px-5 py-2.5 rounded-lg border border-slate-300 text-slate-700 hover:bg-slate-100 font-semibold text-sm transition"
+              className="w-full sm:w-auto px-5 py-3 sm:py-2.5 rounded-xl border border-slate-300 text-slate-700 hover:bg-slate-100 font-semibold text-sm transition min-h-[44px] flex items-center justify-center cursor-pointer"
             >
               {cancelButtonText || "Cancelar"}
             </button>
@@ -434,7 +434,7 @@ export default function DynamicFormRenderer({
           {!hasCustomSubmit && (
             <button
               type="submit"
-              className="px-6 py-2.5 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white font-semibold text-sm shadow-md shadow-indigo-600/20 transition flex items-center gap-2"
+              className="w-full sm:w-auto px-6 py-3 sm:py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-sm shadow-md shadow-indigo-600/20 transition flex items-center justify-center gap-2 min-h-[44px] cursor-pointer"
             >
               <Send className="w-4 h-4" />
               <span>{submitButtonText || "Enviar Petición"}</span>

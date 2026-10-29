@@ -166,21 +166,31 @@ export default function InteractiveCustomTable({
 
       {/* Tabla interactiva a ancho completo */}
       <div className="space-y-3">
+        {/* Indicador sutil de deslizamiento horizontal exclusivo para móvil */}
+        <div className="sm:hidden flex items-center justify-between text-[11px] text-slate-500 bg-slate-50 px-2.5 py-1.5 rounded-lg border border-slate-200">
+          <span className="flex items-center gap-1 font-medium">
+            ↔ Desliza horizontalmente la tabla
+          </span>
+          <span className="text-[10px] text-indigo-600 font-bold">
+            {rows.length} {rows.length === 1 ? "pieza" : "piezas"}
+          </span>
+        </div>
+
         <div className="overflow-x-auto border border-slate-200 rounded-xl bg-white shadow-sm">
-          <table className="w-full text-left text-sm border-collapse">
+          <table className="w-full text-left text-sm border-collapse min-w-[320px]">
             <thead>
               <tr className="bg-slate-100 text-slate-700 border-b border-slate-200">
-                <th className="py-2.5 px-3 text-xs font-semibold w-12 text-center">#</th>
+                <th className="py-2.5 px-3 text-xs font-semibold w-10 text-center">#</th>
                 {tableConfig.columns.map((col) => (
-                  <th key={col.id} className="py-2.5 px-3 text-xs font-semibold uppercase tracking-wider">
+                  <th key={col.id} className="py-2.5 px-3 text-xs font-semibold uppercase tracking-wider min-w-[110px]">
                     {col.header}
                   </th>
                 ))}
                 {renderConfig && (
-                  <th className="py-2.5 px-2 text-xs font-semibold text-center w-24">Visor 3D</th>
+                  <th className="py-2.5 px-2 text-xs font-semibold text-center min-w-[90px]">Visor 3D</th>
                 )}
                 {!readOnly && (
-                  <th className="py-2.5 px-2 text-xs font-semibold text-center w-28">Acción</th>
+                  <th className="py-2.5 px-2 text-xs font-semibold text-center min-w-[95px]">Acción</th>
                 )}
               </tr>
             </thead>
@@ -323,18 +333,18 @@ export default function InteractiveCustomTable({
         <div className="fixed inset-0 z-50 bg-black/70 backdrop-blur-xs flex items-center justify-center p-3 sm:p-4 animate-in fade-in duration-200">
           <div className="bg-white rounded-3xl border border-slate-200 shadow-2xl max-w-lg w-full overflow-hidden flex flex-col max-h-[92vh]">
             {/* Header del Modal */}
-            <div className="flex items-center justify-between px-6 py-4 bg-slate-50 border-b border-slate-200">
-              <div className="flex items-center gap-3">
-                <div className="p-2 rounded-xl bg-indigo-50 text-indigo-600">
-                  {modalMode === "create" ? <Plus className="w-5 h-5" /> : <Layers className="w-5 h-5" />}
+            <div className="flex items-center justify-between px-4 sm:px-6 py-3.5 sm:py-4 bg-slate-50 border-b border-slate-200">
+              <div className="flex items-center gap-2.5 sm:gap-3">
+                <div className="p-1.5 sm:p-2 rounded-xl bg-indigo-50 text-indigo-600">
+                  {modalMode === "create" ? <Plus className="w-4 h-4 sm:w-5 sm:h-5" /> : <Layers className="w-4 h-4 sm:w-5 sm:h-5" />}
                 </div>
                 <div>
-                  <h3 className="text-sm font-bold text-slate-900">
+                  <h3 className="text-sm font-bold text-slate-900 leading-tight">
                     {modalMode === "create"
                       ? "Agregar Nueva Pieza / Fila"
                       : `Detalle de la Pieza #${(editingRowIndex ?? 0) + 1}`}
                   </h3>
-                  <p className="text-[11px] text-slate-500">
+                  <p className="text-[10px] sm:text-[11px] text-slate-500">
                     {tableConfig.name} • Formato Vertical
                   </p>
                 </div>
@@ -343,7 +353,7 @@ export default function InteractiveCustomTable({
               <button
                 type="button"
                 onClick={() => setIsRowModalOpen(false)}
-                className="text-slate-400 hover:text-slate-700 p-2 rounded-xl transition cursor-pointer"
+                className="text-slate-400 hover:text-slate-700 p-1.5 sm:p-2 rounded-xl transition cursor-pointer"
                 title="Cerrar modal"
               >
                 <X className="w-5 h-5" />
@@ -351,7 +361,7 @@ export default function InteractiveCustomTable({
             </div>
 
             {/* Formulario en Formato Vertical */}
-            <div className="p-6 space-y-4 flex-1 overflow-y-auto">
+            <div className="p-4 sm:p-6 space-y-4 flex-1 overflow-y-auto">
               {tableConfig.columns.map((col) => (
                 <div key={col.id} className="space-y-1.5">
                   <label className="block text-xs font-semibold text-slate-700">
@@ -361,7 +371,7 @@ export default function InteractiveCustomTable({
                     <select
                       value={String(modalFormData[col.id] || "")}
                       onChange={(e) => handleModalFieldChange(col.id, e.target.value)}
-                      className="w-full text-sm font-medium bg-white border border-slate-300 rounded-xl py-2.5 px-3 focus:ring-2 focus:ring-indigo-500 focus:outline-none text-slate-800"
+                      className="w-full text-base sm:text-sm font-medium bg-white border border-slate-300 rounded-xl py-2.5 px-3 focus:ring-2 focus:ring-indigo-500 focus:outline-none text-slate-800 min-h-[44px]"
                     >
                       {col.options.map((opt) => (
                         <option key={opt} value={opt}>
@@ -380,22 +390,22 @@ export default function InteractiveCustomTable({
                         )
                       }
                       placeholder={`Ingresa ${col.header.toLowerCase()}`}
-                      className="w-full text-sm bg-white border border-slate-300 rounded-xl py-2.5 px-3 focus:ring-2 focus:ring-indigo-500 focus:outline-none font-medium text-slate-800"
+                      className="w-full text-base sm:text-sm bg-white border border-slate-300 rounded-xl py-2.5 px-3 focus:ring-2 focus:ring-indigo-500 focus:outline-none font-medium text-slate-800 min-h-[44px]"
                     />
                   )}
                 </div>
               ))}
             </div>
 
-            {/* Footer con Botones */}
-            <div className="px-6 py-4 bg-slate-50 border-t border-slate-200 flex items-center justify-between gap-3">
+            {/* Footer con Botones Adaptables a Pantallas Móviles */}
+            <div className="px-4 sm:px-6 py-3.5 sm:py-4 bg-slate-50 border-t border-slate-200 flex flex-col-reverse sm:flex-row items-stretch sm:items-center justify-between gap-2.5 sm:gap-3">
               {modalMode === "edit" ? (
                 <>
                   <button
                     type="button"
                     disabled={rows.length <= 1}
                     onClick={handleDeleteFromModal}
-                    className={`inline-flex items-center gap-1.5 px-4 py-2.5 rounded-xl text-xs font-bold transition cursor-pointer ${
+                    className={`inline-flex items-center justify-center gap-1.5 px-4 py-2.5 rounded-xl text-xs font-bold transition cursor-pointer min-h-[42px] sm:min-h-0 w-full sm:w-auto ${
                       rows.length <= 1
                         ? "text-slate-300 bg-slate-100 cursor-not-allowed"
                         : "text-rose-600 bg-rose-50 hover:bg-rose-100 border border-rose-200"
@@ -406,21 +416,21 @@ export default function InteractiveCustomTable({
                     <span>Eliminar Pieza</span>
                   </button>
 
-                  <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-2 w-full sm:w-auto">
                     <button
                       type="button"
                       onClick={() => setIsRowModalOpen(false)}
-                      className="px-4 py-2.5 rounded-xl border border-slate-300 text-slate-600 hover:bg-slate-100 text-xs font-semibold transition cursor-pointer"
+                      className="flex-1 sm:flex-initial px-4 py-2.5 rounded-xl border border-slate-300 text-slate-600 hover:bg-slate-100 text-xs font-semibold transition cursor-pointer min-h-[42px] sm:min-h-0"
                     >
                       Cerrar
                     </button>
                     <button
                       type="button"
                       onClick={handleSaveModalRow}
-                      className="inline-flex items-center gap-1.5 px-5 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-xs font-bold shadow-md shadow-indigo-600/20 transition cursor-pointer"
+                      className="flex-1 sm:flex-initial inline-flex items-center justify-center gap-1.5 px-5 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-xs font-bold shadow-md shadow-indigo-600/20 transition cursor-pointer min-h-[42px] sm:min-h-0"
                     >
                       <Check className="w-4 h-4" />
-                      <span>Guardar Cambios</span>
+                      <span>Guardar</span>
                     </button>
                   </div>
                 </>
@@ -429,14 +439,14 @@ export default function InteractiveCustomTable({
                   <button
                     type="button"
                     onClick={() => setIsRowModalOpen(false)}
-                    className="px-4 py-2.5 rounded-xl border border-slate-300 text-slate-600 hover:bg-slate-100 text-xs font-semibold transition cursor-pointer"
+                    className="w-full sm:w-auto px-4 py-2.5 rounded-xl border border-slate-300 text-slate-600 hover:bg-slate-100 text-xs font-semibold transition cursor-pointer min-h-[42px] sm:min-h-0 text-center"
                   >
                     Cancelar
                   </button>
                   <button
                     type="button"
                     onClick={handleSaveModalRow}
-                    className="inline-flex items-center gap-1.5 px-5 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-xs font-bold shadow-md shadow-indigo-600/20 transition cursor-pointer"
+                    className="w-full sm:w-auto inline-flex items-center justify-center gap-1.5 px-5 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-xs font-bold shadow-md shadow-indigo-600/20 transition cursor-pointer min-h-[42px] sm:min-h-0"
                   >
                     <Plus className="w-4 h-4" />
                     <span>Agregar Pieza (+1 unidad)</span>

@@ -317,17 +317,18 @@ export default function CheckoutBillingPage() {
     <div className="min-h-screen bg-slate-50 flex flex-col">
       {/* Header */}
       <header className="bg-white border-b border-slate-200 sticky top-0 z-40">
-        <div className="max-w-5xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between">
+        <div className="max-w-5xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between gap-2">
           <Link
             href="/"
-            className="flex items-center gap-2 text-xs font-bold text-slate-600 hover:text-slate-900 transition"
+            className="flex items-center gap-1.5 sm:gap-2 text-xs font-bold text-slate-600 hover:text-slate-900 transition shrink-0"
           >
             <ArrowLeft className="w-4 h-4" />
             <span>Regresar a la Tienda</span>
           </Link>
-          <div className="flex items-center gap-2 text-xs font-bold text-emerald-700 bg-emerald-50 px-3 py-1 rounded-full border border-emerald-200">
-            <Lock className="w-3.5 h-3.5" />
-            <span>Checkout Seguro Mercado Pago</span>
+          <div className="flex items-center gap-1.5 text-[11px] sm:text-xs font-bold text-emerald-700 bg-emerald-50 px-2.5 sm:px-3 py-1 rounded-full border border-emerald-200 truncate">
+            <Lock className="w-3.5 h-3.5 shrink-0" />
+            <span className="hidden xs:inline sm:inline">Checkout Seguro</span>
+            <span className="xs:hidden sm:hidden">Pago Seguro</span>
           </div>
         </div>
       </header>
