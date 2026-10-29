@@ -79,6 +79,18 @@ export default function OrdersAdminPage() {
       `📧 [NOTIFICACIÓN DE CORREO ENVIADA]:\n• Destinatario Cliente: ${order.customerData.email} ("Tu pedido ${order.orderNumber} cambió a: ${newStatusObj.name}")\n• Destinatario Administrador: admin@grabamil.com ("Actualización de estado en orden ${order.orderNumber}")`
     );
 
+    // Despacho real de correo de actualización de estado
+    fetch("/api/orders/notify-email", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        type: "status_changed",
+        order: { ...order, statusId: newStatusId },
+        newStatus: newStatusObj,
+        note: `Estado actualizado a "${newStatusObj.name}"`,
+      }),
+    }).catch((err) => console.error("Error dispatching status email:", err));
+
     setTimeout(() => {
       setEmailNotificationMsg(null);
     }, 8000);

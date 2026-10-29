@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { mpPayment } from "@/lib/mercadopago/client";
+import { sendEmail, buildOrderConfirmedHtml } from "@/lib/email/service";
 
 /**
  * WEBHOOK SEGURO DE MERCADO PAGO:
@@ -18,15 +19,32 @@ export async function POST(request: Request) {
     const body = await request.json().catch(() => ({}));
     const paymentId = id || body?.data?.id;
 
-    if (paymentId && topic === "payment") {
+    if (paymentId && (topic === "payment" || !topic)) {
       try {
-        const paymentData = await mpPayment.get({ id: paymentId });
+        const paymentData = await mpPayment.get({ id: String(paymentId) });
         console.log(`[Mercado Pago Webhook] Payment ${paymentId} status: ${paymentData.status}`);
 
-        // Aquí se actualiza el documento en Cloud Firestore en producción
-        // y se dispara el correo con Sendgrid / Firebase Mail Extension
+        if (paymentData.status === "approved") {
+          const payerEmail = paymentData.payer?.email;
+          const orderRef = paymentData.external_reference || `ORD-${paymentId}`;
+
+          if (payerEmail) {
+            await sendEmail({
+              to: payerEmail,
+              subject: `✅ Pago Confirmado: Orden ${orderRef} - GrabaMil`,
+              html: buildOrderConfirmedHtml({
+                orderNumber: orderRef,
+                customerName: `${paymentData.payer?.first_name || ""} ${paymentData.payer?.last_name || ""}`.trim() || "Cliente",
+                productName: paymentData.description || "Producto Personalizado GrabaMil",
+                quantity: 1,
+                total: paymentData.transaction_amount || 0,
+                paymentId: String(paymentId),
+              }),
+            });
+          }
+        }
       } catch (e: any) {
-        console.warn(`[Mercado Pago Webhook] Error fetching payment ${paymentId}:`, e?.message);
+        console.warn(`[Mercado Pago Webhook] Error processing payment ${paymentId}:`, e?.message);
       }
     }
 

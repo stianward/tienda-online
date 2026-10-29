@@ -107,6 +107,18 @@ function TransactionResultContent() {
     setEmailNotification(
       `📧 [CORREO AUTOMÁTICO ENVIADO]:\n• Cliente: ${targetOrder.customerData.email} ("Estado de tu compra ${targetOrder.orderNumber}: ${targetStatus.name}")\n• Administrador: admin@grabamil.com ("Orden ${targetOrder.orderNumber} actualizada vía Mercado Pago a: ${targetStatus.name}")`
     );
+
+    // Despacho real mediante el servicio de email (SendGrid GCP / SMTP / Resend)
+    if (normalizedStatus === "approved") {
+      fetch("/api/orders/notify-email", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          type: "order_confirmed",
+          order: updatedOrder,
+        }),
+      }).catch((err) => console.error("Error dispatching email:", err));
+    }
   };
 
   const db = getDatabase();
