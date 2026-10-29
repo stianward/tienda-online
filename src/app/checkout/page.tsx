@@ -5,6 +5,25 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { getDatabase, saveDatabase } from "@/lib/data-store";
 import { CustomForm, Order } from "@/types";
+import { INITIAL_DATABASE_STATE } from "@/lib/data-store";
+
+// Formulario de facturación base garantizado con validación obligatoria de datos
+const GUARANTEED_CLIENT_FORM: CustomForm = {
+  id: "form-cliente-basico",
+  name: "Formulario Estándar Datos de Facturación y Envío",
+  formTypeId: "ft-cliente",
+  elements: [
+    { id: "elem-c1", type: "label", label: "Información para Despacho y Facturación", order: 0 },
+    { id: "elem-c2", type: "text", label: "Nombre Completo", placeholder: "Ej. Juan Pérez", required: true, order: 1 },
+    { id: "elem-c3", type: "email", label: "Correo Electrónico", placeholder: "juan@ejemplo.com", required: true, order: 2 },
+    { id: "elem-c4", type: "number", label: "Teléfono / WhatsApp", placeholder: "3001234567", required: true, order: 3 },
+    { id: "elem-c5", type: "address", label: "Dirección de Entrega y Ciudad", placeholder: "Calle 100 # 15-20, Bogotá", required: true, order: 4 },
+    { id: "elem-c6", type: "button_cancel", label: "Volver a la Tienda", order: 5 },
+    { id: "elem-c7", type: "button_submit", label: "Pagar con Mercado Pago", order: 6 },
+  ],
+  createdAt: "2026-01-01T00:00:00Z",
+  updatedAt: "2026-01-01T00:00:00Z",
+};
 import {
   CreditCard,
   ArrowLeft,
@@ -50,8 +69,8 @@ export default function CheckoutBillingPage() {
           f.name.toLowerCase().includes("envío") ||
           f.name.toLowerCase().includes("despacho")
       ) ||
-      db.customForms.find((f) => f.elements.some((e) => e.type === "email" || e.type === "address")) ||
-      db.customForms[0];
+      db.customForms.find((f) => f.elements && f.elements.some((e) => e.type === "email" || e.type === "address")) ||
+      GUARANTEED_CLIENT_FORM;
 
     setClientForm(foundForm);
   }, [router]);
